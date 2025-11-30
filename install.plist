@@ -1,15 +1,31 @@
-<!DOCTYPE html>
-<html>
-<head>
-<meta charset="utf-8">
-<title>ぷにぷに MOD インストール</title>
-</head>
-<body>
-<h2>ぷにぷに MOD インストール</h2>
-<p>
-    <a href="itms-services://?action=download-manifest&url=https://shirasu1221.github.io/install.plist">
-        インストールする
-    </a>
-</p>
-</body>
-</html>
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>items</key>
+    <array>
+        <dict>
+            <key>assets</key>
+            <array>
+                <dict>
+                    <key>kind</key>
+                    <string>software-package</string>
+                    <key>url</key>
+                    <string>https://www.dropbox.com/scl/fi/r8lmg4vchxzqn976ng824/_4.155.0_-MOD.ipa?rlkey=enr86y8vywvtoely7136an9yk&amp;st=axywd05a&amp;dl=1</string>
+                </dict>
+            </array>
+            <key>metadata</key>
+            <dict>
+                <key>bundle-identifier</key>
+                <string>com.Level5.YWP</string>
+                <key>bundle-version</key>
+                <string>4.155.0</string>
+                <key>kind</key>
+                <string>software</string>
+                <key>title</key>
+                <string>ぷにぷに 4.155.0</string>
+            </dict>
+        </dict>
+    </array>
+</dict>
+</plist>
