@@ -1,32 +1,32 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
-"http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+ "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
-<dict>
+  <dict>
     <key>items</key>
     <array>
+      <dict>
+        <key>assets</key>
+        <array>
+          <dict>
+            <key>kind</key>
+            <string>software-package</string>
+            <key>url</key>
+            <string>https://shirasu1221.github.io/punipuni.ipa</string>
+          </dict>
+        </array>
+        <key>metadata</key>
         <dict>
-            <key>assets</key>
-            <array>
-                <dict>
-                    <key>kind</key>
-                    <string>software-package</string>
-                    <key>url</key>
-                    <string>https://www.dropbox.com/scl/fi/uxhy3jde8cwg3pn1mrl5k/signed_ywlec34KTeiG.ipa?rlkey=u0rnxk4hjpj97p51x5hb1var1&st=pijij525&dl=1</string>
-                </dict>
-            </array>
-            <key>metadata</key>
-            <dict>
-                <key>bundle-identifier</key>
-                <string>com.shirasu.punipuni</string>
-                <key>bundle-version</key>
-                <string>4.155.0</string>
-                <key>kind</key>
-                <string>software</string>
-                <key>title</key>
-                <string>ぷにぷに</string>
-            </dict>
+          <key>bundle-identifier</key>
+          <string>com.shirasu.punipuni</string>
+          <key>bundle-version</key>
+          <string>4.155.0</string>
+          <key>kind</key>
+          <string>software</string>
+          <key>title</key>
+          <string>ぷにぷに</string>
         </dict>
+      </dict>
     </array>
-</dict>
+  </dict>
 </plist>
