@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+"http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
     <key>items</key>
@@ -11,19 +12,19 @@
                     <key>kind</key>
                     <string>software-package</string>
                     <key>url</key>
-                    <string>https://www.dropbox.com/scl/fi/uxhy3jde8cwg3pn1mrl5k/signed_ywlec34KTeiG.ipa?rlkey=u0rnxk4hjpj97p51x5hb1var1&amp;st=pijij525&amp;dl=1</string>
+                    <string>https://www.dropbox.com/scl/fi/uxhy3jde8cwg3pn1mrl5k/signed_ywlec34KTeiG.ipa?rlkey=u0rnxk4hjpj97p51x5hb1var1&st=pijij525&dl=1</string>
                 </dict>
             </array>
             <key>metadata</key>
             <dict>
                 <key>bundle-identifier</key>
-                <string>com.shirasu.punipuni</string>
+                <string>com.example.custombundle</string>
                 <key>bundle-version</key>
-                <string>4.155.0</string>
+                <string>1.0</string>
                 <key>kind</key>
                 <string>software</string>
                 <key>title</key>
-                <string>ぷにぷに</string>
+                <string>Punipuni</string>
             </dict>
         </dict>
     </array>
