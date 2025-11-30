@@ -11,13 +11,13 @@
                     <key>kind</key>
                     <string>software-package</string>
                     <key>url</key>
-                    <string>https://www.dropbox.com/scl/fi/ub6mjx2k4mopxt17bty65/_4.155.0_-MOD.ipa?rlkey=fnqfjjhsx39tj6hmo9ah983mq&st=2mnewoir&dl=1</string>
+                    <string>https://www.dropbox.com/scl/fi/m5q14c2s6go047rsms0vn/_4.155.0_-MOD.ipa?rlkey=ixk6u0ifgy1xw8kb0dnpaxlvz&amp;st=vjpgvjd7&amp;dl=1</string>
                 </dict>
             </array>
             <key>metadata</key>
             <dict>
                 <key>bundle-identifier</key>
-                <string>WanHub.com.Level5.YWP</string>
+                <string>com.Level5.YWP</string>
                 <key>bundle-version</key>
                 <string>4.155.0</string>
                 <key>kind</key>
