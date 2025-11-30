@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>ぷにぷに MOD インストール</title>
+</head>
+<body>
+<h2>ぷにぷに MOD インストール</h2>
+<p>
+    <a href="itms-services://?action=download-manifest&url=https://shirasu1221.github.io/install.plist">
+        インストールする
+    </a>
+</p>
+</body>
+</html>
