@@ -126,7 +126,7 @@
       <p>GitHub → <a href="https://github.com/shirasu1221" style="color:#87b3ff">@shirasu1221</a></p>
     </div>
 
-    <!-- ここがパスワード保護ページ -->
+    <!-- パスワードページ -->
     <div id="lockedPage" class="page" style="display:none">
       <h2>🔐 パスワードメニュー</h2>
       <p>ここはパスワードが必要なページです。</p>
@@ -168,22 +168,14 @@
       menuOpen = true;
     };
 
-    /* 🔐 パスワード保護機能 */
-    const correctHash = "d404559f602eab6fdc1db7a7cfe3f5fd"; // MD5("shirasu")
+    /* 🔐 パスワード保護 — WebCryptoを使わない確実版 */
+    const correctPassword = "shirasu"; // ←パスワード
 
-    async function md5(text) {
-      const data = new TextEncoder().encode(text);
-      const digest = await crypto.subtle.digest("MD5", data);
-      return Array.from(new Uint8Array(digest)).map(b => b.toString(16).padStart(2,"0")).join("");
-    }
-
-    lockedBtn.onclick = async () => {
+    lockedBtn.onclick = () => {
       const input = prompt("パスワードを入力してください：");
-      if (!input) return;
+      if (input === null) return;
 
-      const hash = await md5(input);
-
-      if (hash === correctHash) {
+      if (input === correctPassword) {
         pages.forEach(p => p.style.display='none');
         document.getElementById("lockedPage").style.display='block';
         sidebar.classList.remove("show");
@@ -196,28 +188,34 @@
 
     /* ドラッグ処理 */
     let dragging=false, offsetX=0, offsetY=0;
+
     function startDrag(e){
       dragging=true;
       const rect=menuBtn.getBoundingClientRect();
       const clientX=e.touches?e.touches[0].clientX:e.clientX;
       const clientY=e.touches?e.touches[0].clientY:e.clientY;
-      offsetX=clientX-rect.left; offsetY=clientY-rect.top;
+      offsetX=clientX-rect.left;
+      offsetY=clientY-rect.top;
     }
+
     function drag(e){
       if(!dragging)return;
       const clientX=e.touches?e.touches[0].clientX:e.clientX;
       const clientY=e.touches?e.touches[0].clientY:e.clientY;
       const x=Math.min(window.innerWidth-50, Math.max(0, clientX-offsetX));
       const y=Math.min(window.innerHeight-50, Math.max(0, clientY-offsetY));
-      menuBtn.style.left=x+"px"; 
+      menuBtn.style.left=x+"px";
       menuBtn.style.top=y+"px";
     }
+
     function endDrag(){ dragging=false; }
 
     menuBtn.addEventListener("mousedown", startDrag);
     menuBtn.addEventListener("touchstart", startDrag);
+
     window.addEventListener("mousemove", drag);
     window.addEventListener("touchmove", drag);
+
     window.addEventListener("mouseup", endDrag);
     window.addEventListener("touchend", endDrag);
   </script>
