@@ -18,9 +18,9 @@
             <key>metadata</key>
             <dict>
                 <key>bundle-identifier</key>
-                <string>com.example.custombundle</string>
+                <string>WanHub.com.Level5.YWP</string>
                 <key>bundle-version</key>
-                <string>1.0</string>
+                <string>4.155.0</string>
                 <key>kind</key>
                 <string>software</string>
                 <key>title</key>
