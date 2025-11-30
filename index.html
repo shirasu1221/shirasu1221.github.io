@@ -15,7 +15,6 @@
       overflow: hidden;
     }
 
-    /* ★ ドラッグできるメニューボタン ★ */
     .menu-btn {
       position: fixed;
       left: 20px;
@@ -32,7 +31,6 @@
       touch-action: none;
     }
 
-    /* サイドメニュー */
     .sidebar {
       position: fixed;
       left: 0;
@@ -64,7 +62,6 @@
       cursor: pointer;
     }
 
-    /* コンテンツ（右側） */
     .content {
       position: absolute;
       left: 0;
@@ -99,14 +96,15 @@
 
 <body>
 
-  <!-- ★ ドラッグ可能な≡ボタン -->
+  <!-- ドラッグ可能な ≡ ボタン -->
   <button class="menu-btn" id="menuBtn">≡</button>
 
   <div class="sidebar" id="sidebar">
     <h2>しらす</h2>
-    <button data-target="page1">ipa ダウンロード</button>
-    <button data-target="page2">ipa インストール</button>
-    <button data-target="page4">SNS</button>
+    <button data-target="page1">IPA ダウンロード</button>
+    <button data-target="page2">IPA インストール</button>
+    <button data-target="page3">SNS</button>
+    <button id="lockedMenuBtn">🔐 パスワードメニュー</button>
   </div>
 
   <div class="content" id="content">
@@ -114,53 +112,50 @@
 
     <div id="page1" class="page" style="display:none">
       <h2>IPA ダウンロード</h2>
-      <p><a href="https://www.dropbox.com/scl/fi/xzy3uhzfkk5yzq8blxbqb/.ipa?rlkey=o2npkvjdrld8w376tgsz8wpe5&st=033xeslv&dl=1" style="color:#87b3ff">IPAをダウンロード</a></p>
+      <p><a href="#" style="color:#87b3ff">IPAダウンロード</a></p>
     </div>
 
     <div id="page2" class="page" style="display:none">
       <h2>IPA インストール</h2>
-      <p><a href="itms-services://?action=download-manifest&url=https://shirasu1221.github.io/install.plist" style="color:#87b3ff">ぷにぷにインストールリンク</a></p>
+      <p><a href="install.html" style="color:#87b3ff">インストールページへ</a></p>
     </div>
 
-    <div id="page4" class="page" style="display:none">
+    <div id="page3" class="page" style="display:none">
       <h2>SNS</h2>
       <p>YouTube → <a href="https://youtube.com/@shirasu1221" style="color:#87b3ff">しらす</a></p>
       <p>GitHub → <a href="https://github.com/shirasu1221" style="color:#87b3ff">@shirasu1221</a></p>
     </div>
+
+    <!-- ここがパスワード保護ページ -->
+    <div id="lockedPage" class="page" style="display:none">
+      <h2>🔐 パスワードメニュー</h2>
+      <p>ここはパスワードが必要なページです。</p>
+      <p>好きな秘密の内容をここへ追加できます。</p>
+    </div>
+
   </div>
 
   <script>
-    // ============================================================
-    // ★ メニュー開閉修正（閉じられるように）
-    // ============================================================
-
     const menuBtn = document.getElementById("menuBtn");
     const sidebar = document.getElementById("sidebar");
     const content = document.getElementById("content");
     const backBtn = document.getElementById("backBtn");
     const pages = document.querySelectorAll(".page");
+    const lockedBtn = document.getElementById("lockedMenuBtn");
 
     let menuOpen = false;
 
     menuBtn.onclick = () => {
-      if (menuOpen) {
-        // 閉じる
-        sidebar.classList.remove("show");
-      } else {
-        // 開く
-        sidebar.classList.add("show");
-        content.classList.remove("show");
-      }
+      if (menuOpen) sidebar.classList.remove("show");
+      else { sidebar.classList.add("show"); content.classList.remove("show"); }
       menuOpen = !menuOpen;
     };
 
-    document.querySelectorAll('.sidebar button').forEach(btn => {
+    document.querySelectorAll('.sidebar button[data-target]').forEach(btn => {
       btn.onclick = () => {
         const target = btn.dataset.target;
-
-        pages.forEach(page => page.style.display = 'none');
-        document.getElementById(target).style.display = 'block';
-
+        pages.forEach(p => p.style.display='none');
+        document.getElementById(target).style.display='block';
         sidebar.classList.remove("show");
         content.classList.add("show");
         menuOpen = false;
@@ -173,49 +168,56 @@
       menuOpen = true;
     };
 
-    // ============================================================
-    // ★ ドラッグできる ≡ ボタン
-    // ============================================================
+    /* 🔐 パスワード保護機能 */
+    const correctHash = "d404559f602eab6fdc1db7a7cfe3f5fd"; // MD5("shirasu")
 
-    let dragging = false;
-    let offsetX = 0;
-    let offsetY = 0;
-
-    function startDrag(e) {
-      dragging = true;
-
-      const rect = menuBtn.getBoundingClientRect();
-      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-
-      offsetX = clientX - rect.left;
-      offsetY = clientY - rect.top;
+    async function md5(text) {
+      const data = new TextEncoder().encode(text);
+      const digest = await crypto.subtle.digest("MD5", data);
+      return Array.from(new Uint8Array(digest)).map(b => b.toString(16).padStart(2,"0")).join("");
     }
 
-    function drag(e) {
-      if (!dragging) return;
+    lockedBtn.onclick = async () => {
+      const input = prompt("パスワードを入力してください：");
+      if (!input) return;
 
-      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+      const hash = await md5(input);
 
-      // 画面外に出ないように調整
-      const x = Math.min(window.innerWidth - 50, Math.max(0, clientX - offsetX));
-      const y = Math.min(window.innerHeight - 50, Math.max(0, clientY - offsetY));
+      if (hash === correctHash) {
+        pages.forEach(p => p.style.display='none');
+        document.getElementById("lockedPage").style.display='block';
+        sidebar.classList.remove("show");
+        content.classList.add("show");
+        menuOpen = false;
+      } else {
+        alert("パスワードが違います");
+      }
+    };
 
-      menuBtn.style.left = x + "px";
-      menuBtn.style.top = y + "px";
+    /* ドラッグ処理 */
+    let dragging=false, offsetX=0, offsetY=0;
+    function startDrag(e){
+      dragging=true;
+      const rect=menuBtn.getBoundingClientRect();
+      const clientX=e.touches?e.touches[0].clientX:e.clientX;
+      const clientY=e.touches?e.touches[0].clientY:e.clientY;
+      offsetX=clientX-rect.left; offsetY=clientY-rect.top;
     }
-
-    function endDrag() {
-      dragging = false;
+    function drag(e){
+      if(!dragging)return;
+      const clientX=e.touches?e.touches[0].clientX:e.clientX;
+      const clientY=e.touches?e.touches[0].clientY:e.clientY;
+      const x=Math.min(window.innerWidth-50, Math.max(0, clientX-offsetX));
+      const y=Math.min(window.innerHeight-50, Math.max(0, clientY-offsetY));
+      menuBtn.style.left=x+"px"; 
+      menuBtn.style.top=y+"px";
     }
+    function endDrag(){ dragging=false; }
 
     menuBtn.addEventListener("mousedown", startDrag);
     menuBtn.addEventListener("touchstart", startDrag);
-
     window.addEventListener("mousemove", drag);
     window.addEventListener("touchmove", drag);
-
     window.addEventListener("mouseup", endDrag);
     window.addEventListener("touchend", endDrag);
   </script>
