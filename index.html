@@ -123,7 +123,7 @@
 
     <div id="page2" class="page" style="display:none">
       <h2>IPA インストール</h2>
-      <p><a href="install.html" style="color:#87b3ff">インストールページへ</a></p>
+      <p>パスワードメニューからリンクを取得してください。</p>
     </div>
 
     <div id="page3" class="page" style="display:none">
@@ -133,7 +133,6 @@
     </div>
 
     <div id="lockedPage" class="page" style="display:none"></div>
-
   </div>
 
   <script>
@@ -147,19 +146,23 @@
     let menuOpen = false;
 
     menuBtn.onclick = () => {
-      if(menuOpen){ sidebar.classList.remove("show"); }
-      else{ sidebar.classList.add("show"); content.classList.remove("show"); }
+      if (menuOpen) {
+        sidebar.classList.remove("show");
+      } else {
+        sidebar.classList.add("show");
+        content.classList.remove("show");
+      }
       menuOpen = !menuOpen;
     };
 
-    document.querySelectorAll('.sidebar button[data-target]').forEach(btn=>{
+    document.querySelectorAll('.sidebar button[data‑target]').forEach(btn => {
       btn.onclick = () => {
         const target = btn.dataset.target;
-        pages.forEach(p=>p.style.display='none');
-        document.getElementById(target).style.display='block';
+        pages.forEach(p => p.style.display = 'none');
+        document.getElementById(target).style.display = 'block';
         sidebar.classList.remove("show");
         content.classList.add("show");
-        menuOpen=false;
+        menuOpen = false;
       };
     });
 
@@ -170,23 +173,23 @@
     };
 
     // ドラッグ
-    let dragging=false, offsetX=0, offsetY=0;
-    function startDrag(e){
-      dragging=true;
-      const rect=menuBtn.getBoundingClientRect();
-      const clientX=e.touches?e.touches[0].clientX:e.clientX;
-      const clientY=e.touches?e.touches[0].clientY:e.clientY;
-      offsetX=clientX-rect.left; offsetY=clientY-rect.top;
+    let dragging = false, offsetX = 0, offsetY = 0;
+    function startDrag(e) {
+      dragging = true;
+      const rect = menuBtn.getBoundingClientRect();
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+      offsetX = clientX - rect.left;
+      offsetY = clientY - rect.top;
     }
-    function drag(e){
-      if(!dragging) return;
-      const clientX=e.touches?e.touches[0].clientX:e.clientX;
-      const clientY=e.touches?e.touches[0].clientY:e.clientY;
-      const x=Math.min(window.innerWidth-50, Math.max(0, clientX-offsetX));
-      const y=Math.min(window.innerHeight-50, Math.max(0, clientY-offsetY));
-      menuBtn.style.left=x+"px"; menuBtn.style.top=y+"px";
+    function drag(e) {
+      if (!dragging) return;
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+      menuBtn.style.left = (clientX - offsetX) + "px";
+      menuBtn.style.top  = (clientY - offsetY) + "px";
     }
-    function endDrag(){ dragging=false; }
+    function endDrag(){ dragging = false; }
 
     menuBtn.addEventListener("mousedown", startDrag);
     menuBtn.addEventListener("touchstart", startDrag, {passive:false});
@@ -195,60 +198,75 @@
     window.addEventListener("mouseup", endDrag);
     window.addEventListener("touchend", endDrag);
 
-    // -------------------------
-    // AES-GCM 復号（PBKDF2でWanHubから鍵生成）
-    // -------------------------
-    const encryptedBase64 = "ZDo6VGhpcyBpcyBhIHNlY3JldCBsaW5rIGZvcg=="; // ← 実際はAES-GCMで暗号化した上のbase64
-    const saltBase64 = "c2FsdFNhbXBsZQ=="; // サンプル
-    const ivBase64 = "aXZTYW1wbGU="; // サンプル
+    // AES復号用データ（以下をあなたの暗号データに置き換えてください）
+    const encryptedBase64 = "ここに暗号文 (Base64)";
+    const saltBase64 = "ここに salt (Base64)";
+    const ivBase64 = "ここに iv (Base64)";
 
-    function b64ToArrayBuffer(b64){
-      const bin=atob(b64);
-      const len=bin.length;
-      const bytes=new Uint8Array(len);
-      for(let i=0;i<len;i++) bytes[i]=bin.charCodeAt(i);
+    function b64ToArrayBuffer(b64) {
+      const bin = atob(b64);
+      const len = bin.length;
+      const bytes = new Uint8Array(len);
+      for(let i=0; i<len; i++){
+        bytes[i] = bin.charCodeAt(i);
+      }
       return bytes.buffer;
     }
 
     async function decryptAESGCM(password){
-      try{
-        const salt=b64ToArrayBuffer(saltBase64);
-        const iv=b64ToArrayBuffer(ivBase64);
-        const data=b64ToArrayBuffer(encryptedBase64);
+      try {
+        const salt = b64ToArrayBuffer(saltBase64);
+        const iv   = b64ToArrayBuffer(ivBase64);
+        const data = b64ToArrayBuffer(encryptedBase64);
 
-        const enc=new TextEncoder();
-        const pwKey=await crypto.subtle.importKey("raw", enc.encode(password), {name:"PBKDF2"}, false, ["deriveKey"]);
+        const keyMaterial = await crypto.subtle.importKey(
+          "raw",
+          new TextEncoder().encode(password),
+          {name:"PBKDF2"},
+          false,
+          ["deriveKey"]
+        );
 
-        const derivedKey=await crypto.subtle.deriveKey(
-          {name:"PBKDF2", salt:salt, iterations:200000, hash:"SHA-256"},
-          pwKey,
-          {name:"AES-GCM", length:256},
+        const key = await crypto.subtle.deriveKey(
+          {
+            name:"PBKDF2",
+            salt: salt,
+            iterations: 200000,
+            hash: "SHA-256"
+          },
+          keyMaterial,
+          { name: "AES-GCM", length: 256 },
           false,
           ["decrypt"]
         );
 
-        const plainBuf=await crypto.subtle.decrypt({name:"AES-GCM", iv:iv}, derivedKey, data);
-        return new TextDecoder().decode(plainBuf);
-      }catch(e){
+        const plain = await crypto.subtle.decrypt(
+          { name:"AES-GCM", iv: iv },
+          key,
+          data
+        );
+
+        return new TextDecoder().decode(plain);
+      } catch(e){
         return null;
       }
     }
 
-    lockedBtn.onclick = async ()=>{
-      const input=prompt("パスワードを入力してください：");
-      if(!input) return;
-      const plain=await decryptAESGCM(input);
-      if(plain===null){
+    lockedBtn.onclick = async () => {
+      const input = prompt("パスワードを入力してください：");
+      if (!input) return;
+      const decrypted = await decryptAESGCM(input);
+      if (!decrypted) {
         alert("パスワードが違うか復号に失敗しました。");
         return;
       }
-      pages.forEach(p=>p.style.display='none');
-      const lockedPage=document.getElementById("lockedPage");
-      lockedPage.innerHTML = plain;
-      lockedPage.style.display='block';
+      pages.forEach(p => p.style.display='none');
+      const lp = document.getElementById("lockedPage");
+      lp.innerHTML = decrypted;
+      lp.style.display = "block";
       sidebar.classList.remove("show");
       content.classList.add("show");
-      menuOpen=false;
+      menuOpen = false;
     };
   </script>
 
