@@ -15,15 +15,24 @@
         background: url("https://wallpaper.forfun.com/fetch/e3/e31d4e0667f9ae90b89fa1ea58cb6d7f.jpeg?w=1470&r=0.5625") no-repeat center center fixed;
         background-size: cover;
     }
+
+    /* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+       🔥 ここが≡ボタン。見えない不具合の原因だったため修正。
+       >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> */
     #menuButton {
         position: fixed;
         top: 20px;
         left: 20px;
-        font-size: 30px;
+        font-size: 32px;
+        padding: 12px 18px;
+        border-radius: 8px;
         cursor: pointer;
-        z-index: 1000;
+        z-index: 9999;      /* ← 最前面に強制表示 */
+        color: white;
+        background: rgba(0,0,0,0.55); /* ← 背景と同化しないように */
         user-select: none;
     }
+
     #sideMenu {
         position: fixed;
         top: 0;
@@ -35,7 +44,9 @@
         transition: 0.3s;
         padding-top: 60px;
         box-sizing: border-box;
+        z-index: 5000;
     }
+
     #sideMenu a {
         display: block;
         padding: 15px;
@@ -43,6 +54,7 @@
         text-decoration: none;
         border-bottom: 1px solid rgba(255,255,255,0.2);
     }
+
     #closeMenu {
         position: absolute;
         top: 15px;
@@ -51,6 +63,7 @@
         font-size: 25px;
         cursor: pointer;
     }
+
     #passwordProtected {
         padding: 15px;
         color: white;
@@ -61,26 +74,18 @@
 /* =========================================
    🔐 1. 暗号化済みデータ（AES）
    ========================================= */
-//
-// ※これは平文が見えないように「先に暗号化」した状態で埋め込んでいます
-//
-// ↓↓↓↓↓↓↓↓↓↓↓ ココが暗号化データ ↓↓↓↓↓↓↓↓↓↓↓
-const encryptedData = "U2FsdGVkX1/LCQnRqY0S8WznVS9pDEv6atcbJRB6DF5ywRzcDGPuB4Yvjv7/8XlkThwQGWrzBR4z2Li3TWHoGJdkPhQqYkzV2VdjnhMssJo=";
-// ↑↑↑↑↑↑↑↑↑↑ 暗号化済みデータ ↑↑↑↑↑↑↑↑↑↑
-//
-// 内容（復号前の平文）は：
-// <a href="itms-services://?action=download-manifest&url=https://shirasu1221.github.io/install.plist">ぷにぷに.ipa をインストール</a>
-// を AES で暗号化したものです
-//
+
+const encryptedData =
+"U2FsdGVkX1/LCQnRqY0S8WznVS9pDEv6atcbJRB6DF5ywRzcDGPuB4Yvjv7/8XlkThwQGWrzBR4z2Li3TWHoGJdkPhQqYkzV2VdjnhMssJo=";
 
 const PASSWORD = "WanHub";
-
 
 /* =========================================
    🔐 2. 復号処理
    ========================================= */
 function decryptContent() {
     const pw = document.getElementById("pw").value;
+
     if (pw !== PASSWORD) {
         alert("パスワードが違います。");
         return;
@@ -94,10 +99,8 @@ function decryptContent() {
         return;
     }
 
-    // パスワード成功 → ぷにぷにのインストールリンク表示
     document.getElementById("protectedArea").innerHTML = decrypted;
 }
-
 
 /* =========================================
    📂 メニュー開閉
@@ -113,6 +116,7 @@ function closeMenu() {
 </head>
 <body>
 
+<!-- 🔥 最前面に表示される ≡ ボタン -->
 <div id="menuButton" onclick="openMenu()">≡</div>
 
 <div id="sideMenu">
@@ -123,6 +127,7 @@ function closeMenu() {
 
     <div id="passwordProtected">
         <p>🔐 パスワード入力</p>
+
         <input type="password" id="pw" placeholder="パスワード" />
         <button onclick="decryptContent()">OK</button>
 
