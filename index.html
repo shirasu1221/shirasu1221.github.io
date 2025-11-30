@@ -1,139 +1,224 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ja">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Secure Menu</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>しらすのサイト</title>
 
-<!-- CryptoJS (AES用) -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.2.0/crypto-js.min.js"></script>
-
-<style>
+  <style>
     body {
-        margin: 0;
-        font-family: sans-serif;
-        background: url("https://wallpaper.forfun.com/fetch/e3/e31d4e0667f9ae90b89fa1ea58cb6d7f.jpeg?w=1470&r=0.5625") no-repeat center center fixed;
-        background-size: cover;
+      margin: 0;
+      font-family: sans-serif;
+      height: 100vh;
+      background: url('https://wallpaper.forfun.com/fetch/e3/e31d4e0667f9ae90b89fa1ea58cb6d7f.jpeg?w=1470&r=0.5625') no-repeat center center;
+      background-size: cover;
+      overflow: hidden;
     }
 
-    /* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-       🔥 ここが≡ボタン。見えない不具合の原因だったため修正。
-       >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> */
-    #menuButton {
-        position: fixed;
-        top: 20px;
-        left: 20px;
-        font-size: 32px;
-        padding: 12px 18px;
-        border-radius: 8px;
-        cursor: pointer;
-        z-index: 9999;      /* ← 最前面に強制表示 */
-        color: white;
-        background: rgba(0,0,0,0.55); /* ← 背景と同化しないように */
-        user-select: none;
+    .menu-btn {
+      position: fixed;
+      left: 20px;
+      top: 20px;
+      font-size: 26px;
+      color: white;
+      background: rgba(0,0,0,0.5);
+      border: none;
+      padding: 10px 14px;
+      border-radius: 6px;
+      cursor: pointer;
+      z-index: 2000;
+      user-select: none;
+      touch-action: none;
     }
 
-    #sideMenu {
-        position: fixed;
-        top: 0;
-        left: -250px;
-        width: 250px;
-        height: 100%;
-        background: rgba(0,0,0,0.7);
-        backdrop-filter: blur(5px);
-        transition: 0.3s;
-        padding-top: 60px;
-        box-sizing: border-box;
-        z-index: 5000;
+    .sidebar {
+      position: fixed;
+      left: 0;
+      top: 0;
+      width: 230px;
+      height: 100vh;
+      background: rgba(20, 25, 35, 0.92);
+      color: white;
+      padding: 20px;
+      box-sizing: border-box;
+      transform: translateX(-100%);
+      transition: transform 0.4s ease;
+      z-index: 1500;
     }
 
-    #sideMenu a {
-        display: block;
-        padding: 15px;
-        color: #fff;
-        text-decoration: none;
-        border-bottom: 1px solid rgba(255,255,255,0.2);
+    .sidebar.show {
+      transform: translateX(0);
     }
 
-    #closeMenu {
-        position: absolute;
-        top: 15px;
-        right: 15px;
-        color: white;
-        font-size: 25px;
-        cursor: pointer;
+    .sidebar button {
+      width: 100%;
+      padding: 12px;
+      margin-bottom: 10px;
+      background: rgba(40, 55, 75, 0.9);
+      border: none;
+      color: white;
+      border-radius: 5px;
+      font-size: 15px;
+      cursor: pointer;
     }
 
-    #passwordProtected {
-        padding: 15px;
-        color: white;
-    }
-</style>
-
-<script>
-/* =========================================
-   🔐 1. 暗号化済みデータ（AES）
-   ========================================= */
-
-const encryptedData =
-"U2FsdGVkX1/LCQnRqY0S8WznVS9pDEv6atcbJRB6DF5ywRzcDGPuB4Yvjv7/8XlkThwQGWrzBR4z2Li3TWHoGJdkPhQqYkzV2VdjnhMssJo=";
-
-const PASSWORD = "WanHub";
-
-/* =========================================
-   🔐 2. 復号処理
-   ========================================= */
-function decryptContent() {
-    const pw = document.getElementById("pw").value;
-
-    if (pw !== PASSWORD) {
-        alert("パスワードが違います。");
-        return;
+    .content {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      padding: 20px;
+      box-sizing: border-box;
+      color: white;
+      overflow-y: auto;
+      background: rgba(0,0,0,0.55);
+      backdrop-filter: blur(4px);
+      opacity: 0;
+      transition: opacity 0.3s ease;
     }
 
-    const bytes = CryptoJS.AES.decrypt(encryptedData, pw);
-    const decrypted = bytes.toString(CryptoJS.enc.Utf8);
-
-    if (!decrypted) {
-        alert("復号に失敗しました。");
-        return;
+    .content.show {
+      opacity: 1;
     }
 
-    document.getElementById("protectedArea").innerHTML = decrypted;
-}
-
-/* =========================================
-   📂 メニュー開閉
-   ========================================= */
-function openMenu() {
-    document.getElementById("sideMenu").style.left = "0";
-}
-function closeMenu() {
-    document.getElementById("sideMenu").style.left = "-250px";
-}
-</script>
-
+    .back-btn {
+      padding: 10px 14px;
+      background: rgba(200,30,30,0.9);
+      border: none;
+      border-radius: 5px;
+      color: white;
+      cursor: pointer;
+      margin-bottom: 20px;
+    }
+  </style>
 </head>
+
 <body>
 
-<!-- 🔥 最前面に表示される ≡ ボタン -->
-<div id="menuButton" onclick="openMenu()">≡</div>
+  <!-- ドラッグ可能な ≡ ボタン -->
+  <button class="menu-btn" id="menuBtn">≡</button>
 
-<div id="sideMenu">
-    <div id="closeMenu" onclick="closeMenu()">×</div>
+  <div class="sidebar" id="sidebar">
+    <h2>しらす</h2>
+    <button data-target="page1">IPA ダウンロード</button>
+    <button data-target="page2">IPA インストール</button>
+    <button data-target="page3">SNS</button>
+    <button id="lockedMenuBtn">🔐 パスワードメニュー</button>
+  </div>
 
-    <a href="#">● メニュー1</a>
-    <a href="#">● メニュー2</a>
+  <div class="content" id="content">
+    <button class="back-btn" id="backBtn">← メニューに戻る</button>
 
-    <div id="passwordProtected">
-        <p>🔐 パスワード入力</p>
-
-        <input type="password" id="pw" placeholder="パスワード" />
-        <button onclick="decryptContent()">OK</button>
-
-        <div id="protectedArea" style="margin-top: 15px;"></div>
+    <div id="page1" class="page" style="display:none">
+      <h2>IPA ダウンロード</h2>
+      <p><a href="#" style="color:#87b3ff">IPAダウンロード</a></p>
     </div>
-</div>
+
+    <div id="page2" class="page" style="display:none">
+      <h2>IPA インストール</h2>
+      <p><a href="install.html" style="color:#87b3ff">インストールページへ</a></p>
+    </div>
+
+    <div id="page3" class="page" style="display:none">
+      <h2>SNS</h2>
+      <p>YouTube → <a href="https://youtube.com/@shirasu1221" style="color:#87b3ff">しらす</a></p>
+      <p>GitHub → <a href="https://github.com/shirasu1221" style="color:#87b3ff">@shirasu1221</a></p>
+    </div>
+
+    <!-- パスワードページ -->
+    <div id="lockedPage" class="page" style="display:none">
+      <h2>🔐 パスワードメニュー</h2>
+      <p>ここはパスワードが必要なページです。</p>
+      <p>好きな秘密の内容をここへ追加できます。</p>
+    </div>
+
+  </div>
+
+  <script>
+    const menuBtn = document.getElementById("menuBtn");
+    const sidebar = document.getElementById("sidebar");
+    const content = document.getElementById("content");
+    const backBtn = document.getElementById("backBtn");
+    const pages = document.querySelectorAll(".page");
+    const lockedBtn = document.getElementById("lockedMenuBtn");
+
+    let menuOpen = false;
+
+    menuBtn.onclick = () => {
+      if (menuOpen) sidebar.classList.remove("show");
+      else { sidebar.classList.add("show"); content.classList.remove("show"); }
+      menuOpen = !menuOpen;
+    };
+
+    document.querySelectorAll('.sidebar button[data-target]').forEach(btn => {
+      btn.onclick = () => {
+        const target = btn.dataset.target;
+        pages.forEach(p => p.style.display='none');
+        document.getElementById(target).style.display='block';
+        sidebar.classList.remove("show");
+        content.classList.add("show");
+        menuOpen = false;
+      };
+    });
+
+    backBtn.onclick = () => {
+      content.classList.remove("show");
+      sidebar.classList.add("show");
+      menuOpen = true;
+    };
+
+    /* 🔐 パスワード保護 — WebCryptoを使わない確実版 */
+    const correctPassword = "shirasu"; // ←パスワード
+
+    lockedBtn.onclick = () => {
+      const input = prompt("パスワードを入力してください：");
+      if (input === null) return;
+
+      if (input === correctPassword) {
+        pages.forEach(p => p.style.display='none');
+        document.getElementById("lockedPage").style.display='block';
+        sidebar.classList.remove("show");
+        content.classList.add("show");
+        menuOpen = false;
+      } else {
+        alert("パスワードが違います");
+      }
+    };
+
+    /* ドラッグ処理 */
+    let dragging=false, offsetX=0, offsetY=0;
+
+    function startDrag(e){
+      dragging=true;
+      const rect=menuBtn.getBoundingClientRect();
+      const clientX=e.touches?e.touches[0].clientX:e.clientX;
+      const clientY=e.touches?e.touches[0].clientY:e.clientY;
+      offsetX=clientX-rect.left;
+      offsetY=clientY-rect.top;
+    }
+
+    function drag(e){
+      if(!dragging)return;
+      const clientX=e.touches?e.touches[0].clientX:e.clientX;
+      const clientY=e.touches?e.touches[0].clientY:e.clientY;
+      const x=Math.min(window.innerWidth-50, Math.max(0, clientX-offsetX));
+      const y=Math.min(window.innerHeight-50, Math.max(0, clientY-offsetY));
+      menuBtn.style.left=x+"px";
+      menuBtn.style.top=y+"px";
+    }
+
+    function endDrag(){ dragging=false; }
+
+    menuBtn.addEventListener("mousedown", startDrag);
+    menuBtn.addEventListener("touchstart", startDrag);
+
+    window.addEventListener("mousemove", drag);
+    window.addEventListener("touchmove", drag);
+
+    window.addEventListener("mouseup", endDrag);
+    window.addEventListener("touchend", endDrag);
+  </script>
 
 </body>
 </html>
