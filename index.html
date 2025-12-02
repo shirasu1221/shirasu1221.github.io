@@ -1,243 +1,93 @@
 <!doctype html>
 <html lang="ja">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>しらすのサイト</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>インストール メニュー</title>
 
-  <style>
-    body {
-      margin: 0;
-      font-family: sans-serif;
-      height: 100vh;
-      background: url('https://wallpaper.forfun.com/fetch/e3/e31d4e0667f9ae90b89fa1ea58cb6d7f.jpeg?w=1470&r=0.5625') no-repeat center center;
-      background-size: cover;
-      overflow: hidden;
-    }
+<style>
+:root{
+  --sidebar-width:200px;
+}
 
-    .menu-btn {
-      position: fixed;
-      left: 20px;
-      top: 20px;
-      font-size: 26px;
-      color: white;
-      background: rgba(0,0,0,0.5);
-      border: none;
-      padding: 10px 14px;
-      border-radius: 6px;
-      cursor: pointer;
-      z-index: 2000;
-      user-select: none;
-      touch-action: none;
-    }
+body {
+  margin: 0;
+  font-family: sans-serif;
+  display: flex;
+  height: 100vh;
+  overflow: hidden;
+}
 
-    .sidebar {
-      position: fixed;
-      left: 0;
-      top: 0;
-      width: 230px;
-      height: 100vh;
-      background: rgba(20, 25, 35, 0.92);
-      color: white;
-      padding: 20px;
-      box-sizing: border-box;
-      transform: translateX(-100%);
-      transition: transform 0.4s ease;
-      z-index: 1500;
-    }
+/* 左メニュー */
+.sidebar {
+  width: var(--sidebar-width);
+  background: #333;
+  color: #fff;
+  padding: 15px;
+  box-sizing: border-box;
+}
 
-    .sidebar.show {
-      transform: translateX(0);
-    }
+.sidebar h2 {
+  margin-top: 0;
+  font-size: 20px;
+}
 
-    .sidebar button {
-      width: 100%;
-      padding: 12px;
-      margin-bottom: 10px;
-      background: rgba(40, 55, 75, 0.9);
-      border: none;
-      color: white;
-      border-radius: 5px;
-      font-size: 15px;
-      cursor: pointer;
-    }
+.sidebar a {
+  display: block;
+  color: white;
+  padding: 10px 5px;
+  text-decoration: none;
+  border-radius: 5px;
+}
 
-    .content {
-      position: absolute;
-      left: 0;
-      top: 0;
-      width: 100%;
-      height: 100%;
-      padding: 20px;
-      box-sizing: border-box;
-      color: white;
-      overflow-y: auto;
-      background: rgba(0,0,0,0.55);
-      backdrop-filter: blur(4px);
-      opacity: 0;
-      transition: opacity 0.3s ease;
-    }
+.sidebar a:hover {
+  background: #555;
+}
 
-    .content.show {
-      opacity: 1;
-    }
+/* メイン領域 */
+.main {
+  flex: 1;
+  padding: 20px;
+  overflow-y: auto;
+}
 
-    .back-btn {
-      padding: 10px 14px;
-      background: rgba(200,30,30,0.9);
-      border: none;
-      border-radius: 5px;
-      color: white;
-      cursor: pointer;
-      margin-bottom: 20px;
-    }
-  </style>
+button {
+  padding: 14px 28px;
+  font-size: 18px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  background: #4CAF50;
+  color: white;
+}
+button:hover {
+  background: #45a049;
+}
+</style>
 </head>
 
 <body>
 
-  <!-- ドラッグ可能な ≡ ボタン -->
-  <button class="menu-btn" id="menuBtn" aria-label="メニューボタン">≡</button>
+<!-- 左側メニュー -->
+<div class="sidebar">
+  <h2>メニュー</h2>
 
-  <div class="sidebar" id="sidebar" aria-hidden="true">
-    <h2>しらす</h2>
-    <button data-target="page1">IPA ダウンロード</button>
-    <button data-target="page2">IPA インストール</button>
-    <button data-target="page3">SNS</button>
-    <button id="lockedMenuBtn">隠しメニュー</button>
-  </div>
+  <!-- ★ 隠しメニューは削除しました ★ -->
+  <!-- 例: <a href="#">隠しメニュー</a> を削除 -->
 
-  <div class="content" id="content" aria-live="polite">
-    <button class="back-btn" id="backBtn">← メニューに戻る</button>
+  <a href="index.html">ホーム</a>
+  <a href="install.html">インストール</a>
+  <a href="#">設定</a>
+  <a href="#">情報</a>
+</div>
 
-    <div id="page1" class="page" style="display:none">
-      <h2>IPA ダウンロード</h2>
-      <p><a href="#" style="color:#87b3ff">IPAダウンロード</a></p>
-    </div>
+<!-- メインコンテンツ -->
+<div class="main">
+  <h2>ぷにぷに インストール</h2>
+  <p>左メニューから操作できます。</p>
 
-    <div id="page2" class="page" style="display:none"></div>
+  <button onclick="location.href='install.html'">インストール</button>
+</div>
 
-    <div id="page3" class="page" style="display:none">
-      <h2>SNS</h2>
-      <p>YouTube → <a href="https://youtube.com/@shirasu1221" style="color:#87b3ff">しらす</a></p>
-      <p>GitHub → <a href="https://github.com/shirasu1221" style="color:#87b3ff">@shirasu1221</a></p>
-    </div>
-
-    <!-- パスワード復号領域 -->
-    <div id="lockedPage" class="page" style="display:none"></div>
-  </div>
-
-  <script>
-    const menuBtn = document.getElementById("menuBtn");
-    const sidebar = document.getElementById("sidebar");
-    const content = document.getElementById("content");
-    const backBtn = document.getElementById("backBtn");
-    const pages = document.querySelectorAll(".page");
-    const lockedBtn = document.getElementById("lockedMenuBtn");
-
-    let menuOpen = false;
-
-    menuBtn.onclick = () => {
-      if (menuOpen) {
-        sidebar.classList.remove("show");
-        sidebar.setAttribute("aria-hidden","true");
-      } else {
-        sidebar.classList.add("show");
-        sidebar.setAttribute("aria-hidden","false");
-        content.classList.remove("show");
-      }
-      menuOpen = !menuOpen;
-    };
-
-    document.querySelectorAll(".sidebar button[data-target]").forEach(btn => {
-      btn.onclick = () => {
-        const target = btn.dataset.target;
-        pages.forEach(p => p.style.display="none");
-        document.getElementById(target).style.display="block";
-        sidebar.classList.remove("show");
-        sidebar.setAttribute('aria-hidden','true');
-        content.classList.add("show");
-        menuOpen = false;
-      };
-    });
-
-    backBtn.onclick = () => {
-      content.classList.remove("show");
-      sidebar.classList.add("show");
-      sidebar.setAttribute('aria-hidden','false');
-      menuOpen = true;
-    };
-
-    // -----------------------------
-    // ドラッグ処理
-    // -----------------------------
-    let dragging=false, offsetX=0, offsetY=0;
-
-    function startDrag(e){
-      dragging=true;
-      const rect=menuBtn.getBoundingClientRect();
-      const clientX=e.touches?e.touches[0].clientX:e.clientX;
-      const clientY=e.touches?e.touches[0].clientY:e.clientY;
-      offsetX=clientX-rect.left; offsetY=clientY-rect.top;
-    }
-    function drag(e){
-      if(!dragging) return;
-      const clientX=e.touches?e.touches[0].clientX:e.clientX;
-      const clientY=e.touches?e.touches[0].clientY:e.clientY;
-      const x=Math.min(window.innerWidth-50, Math.max(0, clientX-offsetX));
-      const y=Math.min(window.innerHeight-50, Math.max(0, clientY-offsetY));
-      menuBtn.style.left = x + "px";
-      menuBtn.style.top = y + "px";
-    }
-    function endDrag(){ dragging=false; }
-
-    menuBtn.addEventListener("mousedown", startDrag);
-    menuBtn.addEventListener("touchstart", startDrag, {passive:false});
-    window.addEventListener("mousemove", drag);
-    window.addEventListener("touchmove", drag, {passive:false});
-    window.addEventListener("mouseup", endDrag);
-    window.addEventListener("touchend", endDrag);
-
-
-    // -----------------------------
-    // XOR 暗号化（パスワード: WanHub）
-    // -----------------------------
-    const password = "WanHub";
-
-    // パスワードメニューに表示するHTML（Dropbox版）
-    const hiddenHTML = `
-      <h2>Dropbox版 ぷにぷに インストール</h2>
-      <p>
-        <a href="install.html" style="color:#87b3ff">
-          ぷにぷに（Dropbox版）をインストール
-        </a>
-      </p>
-    `;
-
-    function xorEncode(str, key) {
-      return Array.from(str).map((c,i)=>c.charCodeAt(0) ^ key.charCodeAt(i % key.length));
-    }
-    function xorDecode(arr, key) {
-      return arr.map((v,i)=>String.fromCharCode(v ^ key.charCodeAt(i % key.length))).join('');
-    }
-
-    const encrypted = xorEncode(hiddenHTML, password);
-
-    lockedBtn.onclick = ()=>{
-      const input = prompt("パスワードを入力してください：");
-      if(input !== password){
-        alert("パスワードが違います");
-        return;
-      }
-      const decrypted = xorDecode(encrypted, password);
-      pages.forEach(p => p.style.display='none');
-      const lockedPage = document.getElementById("lockedPage");
-      lockedPage.style.display = "block";
-      lockedPage.innerHTML = decrypted;
-      sidebar.classList.remove("show");
-      content.classList.add("show");
-      menuOpen = false;
-    };
-  </script>
 </body>
 </html>
