@@ -91,12 +91,6 @@
       cursor: pointer;
       margin-bottom: 20px;
     }
-
-    .note {
-      font-size: 13px;
-      color: #ddd;
-      margin-top: 8px;
-    }
   </style>
 </head>
 
@@ -121,9 +115,7 @@
       <p><a href="#" style="color:#87b3ff">IPAダウンロード</a></p>
     </div>
 
-    <div id="page2" class="page" style="display:none">
-    
-    </div>
+    <div id="page2" class="page" style="display:none"></div>
 
     <div id="page3" class="page" style="display:none">
       <h2>SNS</h2>
@@ -131,7 +123,7 @@
       <p>GitHub → <a href="https://github.com/shirasu1221" style="color:#87b3ff">@shirasu1221</a></p>
     </div>
 
-    <!-- パスワードで復号・表示する領域 -->
+    <!-- パスワード復号領域 -->
     <div id="lockedPage" class="page" style="display:none"></div>
   </div>
 
@@ -145,23 +137,23 @@
 
     let menuOpen = false;
 
-    menuBtn.onclick = (e) => {
+    menuBtn.onclick = () => {
       if (menuOpen) {
         sidebar.classList.remove("show");
-        sidebar.setAttribute('aria-hidden','true');
+        sidebar.setAttribute("aria-hidden","true");
       } else {
         sidebar.classList.add("show");
-        sidebar.setAttribute('aria-hidden','false');
+        sidebar.setAttribute("aria-hidden","false");
         content.classList.remove("show");
       }
       menuOpen = !menuOpen;
     };
 
-    document.querySelectorAll('.sidebar button[data-target]').forEach(btn => {
+    document.querySelectorAll(".sidebar button[data-target]").forEach(btn => {
       btn.onclick = () => {
         const target = btn.dataset.target;
-        pages.forEach(p => p.style.display='none');
-        document.getElementById(target).style.display='block';
+        pages.forEach(p => p.style.display="none");
+        document.getElementById(target).style.display="block";
         sidebar.classList.remove("show");
         sidebar.setAttribute('aria-hidden','true');
         content.classList.add("show");
@@ -176,8 +168,11 @@
       menuOpen = true;
     };
 
+    // -----------------------------
     // ドラッグ処理
+    // -----------------------------
     let dragging=false, offsetX=0, offsetY=0;
+
     function startDrag(e){
       dragging=true;
       const rect=menuBtn.getBoundingClientRect();
@@ -203,11 +198,21 @@
     window.addEventListener("mouseup", endDrag);
     window.addEventListener("touchend", endDrag);
 
+
     // -----------------------------
-    // XOR簡易暗号化
+    // XOR 暗号化（パスワード: WanHub）
     // -----------------------------
     const password = "WanHub";
-    const hiddenHTML = '<p><a href="https://shirasu1221.github.io/install.html">ぷにぷに インストールリンク</a></p>';
+
+    // パスワードメニューに表示するHTML（Dropbox版）
+    const hiddenHTML = `
+      <h2>Dropbox版 ぷにぷに インストール</h2>
+      <p>
+        <a href="install.html" style="color:#87b3ff">
+          ぷにぷに（Dropbox版）をインストール
+        </a>
+      </p>
+    `;
 
     function xorEncode(str, key) {
       return Array.from(str).map((c,i)=>c.charCodeAt(0) ^ key.charCodeAt(i % key.length));
@@ -216,19 +221,20 @@
       return arr.map((v,i)=>String.fromCharCode(v ^ key.charCodeAt(i % key.length))).join('');
     }
 
-    // 暗号化済み配列
     const encrypted = xorEncode(hiddenHTML, password);
 
     lockedBtn.onclick = ()=>{
       const input = prompt("パスワードを入力してください：");
-      if(input!==password){ alert("パスワードが違います"); return; }
-      const decrypted = xorDecode(encrypted, input);
+      if(input !== password){
+        alert("パスワードが違います");
+        return;
+      }
+      const decrypted = xorDecode(encrypted, password);
       pages.forEach(p => p.style.display='none');
       const lockedPage = document.getElementById("lockedPage");
       lockedPage.style.display = "block";
       lockedPage.innerHTML = decrypted;
       sidebar.classList.remove("show");
-      sidebar.setAttribute('aria-hidden','true');
       content.classList.add("show");
       menuOpen = false;
     };
