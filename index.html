@@ -207,7 +207,7 @@
     // XOR簡易暗号化
     // -----------------------------
     const password = "WanHub";
-    const hiddenHTML = '<p><a href="https://shirasu1221.github.io/Install.html">ぷにぷに インストールリンク</a></p>';
+    const hiddenHTML = '<p><a href="https://shirasu1221.github.io/install.html">ぷにぷに インストールリンク</a></p>';
 
     function xorEncode(str, key) {
       return Array.from(str).map((c,i)=>c.charCodeAt(0) ^ key.charCodeAt(i % key.length));
