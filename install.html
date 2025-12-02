@@ -4,10 +4,24 @@
     <meta charset="UTF-8">
     <title>IPA Install</title>
 </head>
-<body>
+<body style="background:#111; color:white; font-family:sans-serif; padding:20px">
+
     <h1>IPA インストール</h1>
-    <a href="itms-services://?action=download-manifest&url=https://shirasu1221.github.io/install.plist">
-        インストール
-    </a>
+
+    <p>インストール処理を開始しています…</p>
+
+    <script>
+        // あなたの install.plist に書き換え済み
+        const plistURL = "https://shirasu1221.github.io/install.plist";
+        location.href = "itms-services://?action=download-manifest&url=" + encodeURIComponent(plistURL);
+    </script>
+
+    <p style="margin-top:20px;">
+        自動で開かない場合は
+        <a href="itms-services://?action=download-manifest&url=https://shirasu1221.github.io/install.plist" style="color:#87b3ff">
+            こちらをタップ
+        </a>
+    </p>
+
 </body>
 </html>
