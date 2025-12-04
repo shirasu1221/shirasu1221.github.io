@@ -1,83 +1,74 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="ja">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>IPA インストール</title>
-
+<meta charset="UTF-8">
+<title>App Install</title>
 <style>
-  body {
-    font-family: sans-serif;
-    background: #111;
-    color: white;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
-  }
-
-  #box {
-    background: rgba(0,0,0,0.6);
-    padding: 25px;
-    border-radius: 10px;
-    width: 80%;
-    max-width: 380px;
-    text-align: center;
-  }
-
-  input {
-    width: 100%;
-    padding: 12px;
-    margin-top: 10px;
-    border: none;
-    border-radius: 6px;
-    font-size: 18px;
-  }
-
-  button {
-    margin-top: 15px;
-    background: #4a84ff;
-    border: none;
-    padding: 12px 16px;
-    width: 100%;
-    color: white;
-    border-radius: 6px;
-    font-size: 18px;
-    cursor: pointer;
-  }
+body {
+  font-family: sans-serif;
+  background: #f4f4f4;
+  padding: 30px;
+}
+.box {
+  background: white;
+  padding: 20px;
+  border-radius: 10px;
+  max-width: 350px;
+  margin: auto;
+  box-shadow: 0 0 10px rgba(0,0,0,0.1);
+}
+input[type="password"] {
+  width: 100%;
+  padding: 10px;
+  margin-top: 10px;
+}
+button {
+  width: 100%;
+  padding: 10px;
+  margin-top: 15px;
+  background: #007aff;
+  color: white;
+  border: none;
+  font-size: 16px;
+  border-radius: 8px;
+}
+#error {
+  color: red;
+  margin-top: 10px;
+}
 </style>
-
 </head>
-
 <body>
 
-<div id="box">
-  <h2>IPA インストール</h2>
-  <p>パスワードを入力してください</p>
-  <input id="pw" type="text" placeholder="パスワード">
+<div class="box">
+  <h2>アプリ インストール</h2>
+  <p>パスワードを入力してください:</p>
+
+  <input id="pw" type="password" placeholder="パスワード">
   <button onclick="install()">決定</button>
+
+  <div id="error"></div>
 </div>
 
 <script>
+// 各アプリの manifest(plist) リンク
+const links = {
+  "ぷにぷに": "itms-services://?action=download-manifest&url=https://shirasu1221.github.io/punipuni/install.plist",
+
+  // ▼にゃんこ（Dropbox IPA）※このままでは直接インストールできません
+  "にゃんこ": "https://www.dropbox.com/scl/fi/dhdaqkzwy2zxxd7aizpul/signed_Sbg4Iya0SpO7.ipa?rlkey=bjh9lw9o4jzwow0isn2fwfpb6&st=tvrtthq7&dl=1"
+};
+
 function install() {
-    const pw = document.getElementById("pw").value.trim();
+  const pw = document.getElementById("pw").value.trim();
+  const error = document.getElementById("error");
 
-    // パスワード → 対応する plist URL
-    const table = {
-        "ぷにぷに": "https://www.dropbox.com/scl/fi/uxhy3jde8cwg3pn1mrl5k/signed_ywlec34KTeiG.ipa?rlkey=u0rnxk4hjpj97p51x5hb1var1&st=6a0z0cq0&dl=1",
-        "ファンパレ": "https://www.dropbox.com/scl/fi/dhdaqkzwy2zxxd7aizpul/signed_Sbg4Iya0SpO7.ipa?rlkey=bjh9lw9o4jzwow0isn2fwfpb6&st=tvrtthq7&dl=1"
-    };
-
-    if (!(pw in table)) {
-        alert("パスワードが違います");
-        return;
-    }
-
-    // インストール開始
-    const plistURL = encodeURIComponent(table[pw]);
-    const url = "itms-services://?action=download-manifest&url=" + plistURL;
-
-    window.location.href = url;
+  if (links[pw]) {
+    error.textContent = "";
+    window.location.href = links[pw];
+  } else {
+    error.textContent = "パスワードが違います";
+  }
 }
 </script>
 
