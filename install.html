@@ -6,7 +6,7 @@
 </head>
 <body style="background:#000; color:white; font-family:sans-serif; text-align:center; padding-top:50px;">
 
-  <h2>インストールするアプリを選択</h2>
+  <h2>インストールするアプリの名前を入力</h2>
   <p>Pass</p>
 
   <input id="pw" type="text" placeholder="アプリ名を入力…" 
@@ -21,13 +21,13 @@
 
       if(v === "ぷにぷに"){
         location.href =
-        "itms-services://?action=download-manifest&url=https://shirasu1221.github.io/punipuni.plist";
+        "itms-services://?action=download-manifest&url=https://shirasu1221.github.io/install.plist";
         return;
       }
 
       if(v === "ファンパレ"){
         location.href =
-        "itms-services://?action=download-manifest&url=https://shirasu1221.github.io/nyanko.plist";
+        "itms-services://?action=download-manifest&url=https://shirasu1221.github.io/installFanPare.plist";
         return;
       }
 
