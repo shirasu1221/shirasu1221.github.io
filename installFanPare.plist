@@ -18,13 +18,13 @@
         <key>metadata</key>
         <dict>
           <key>bundle-identifier</key>
-          <string>com.shirasu.nyanko</string>
+          <string>Shirasu.ipa</string>
           <key>bundle-version</key>
-          <string>1.0.0</string>
+          <string>3.0.2</string>
           <key>kind</key>
           <string>software</string>
           <key>title</key>
-          <string>にゃんこ</string>
+          <string>ファンパレ</string>
         </dict>
       </dict>
     </array>
