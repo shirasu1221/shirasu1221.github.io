@@ -2,16 +2,84 @@
 <html lang="ja">
 <head>
 <meta charset="utf-8">
-<title>インストール開始</title>
-<script>
-window.onload = () => {
-    const url = "itms-services://?action=download-manifest&url=https://shirasu1221.github.io/install.plist";
-    window.location.href = url;
-};
-</script>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>IPA インストール</title>
+
+<style>
+  body {
+    font-family: sans-serif;
+    background: #111;
+    color: white;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+  }
+
+  #box {
+    background: rgba(0,0,0,0.6);
+    padding: 25px;
+    border-radius: 10px;
+    width: 80%;
+    max-width: 380px;
+    text-align: center;
+  }
+
+  input {
+    width: 100%;
+    padding: 12px;
+    margin-top: 10px;
+    border: none;
+    border-radius: 6px;
+    font-size: 18px;
+  }
+
+  button {
+    margin-top: 15px;
+    background: #4a84ff;
+    border: none;
+    padding: 12px 16px;
+    width: 100%;
+    color: white;
+    border-radius: 6px;
+    font-size: 18px;
+    cursor: pointer;
+  }
+</style>
+
 </head>
+
 <body>
-<p>インストールを開始します…</p>
-<p>自動で開かない場合は <a href="itms-services://?action=download-manifest&url=https://shirasu1221.github.io/install.plist">こちら</a></p>
+
+<div id="box">
+  <h2>IPA インストール</h2>
+  <p>パスワードを入力してください</p>
+  <input id="pw" type="text" placeholder="パスワード">
+  <button onclick="install()">決定</button>
+</div>
+
+<script>
+function install() {
+    const pw = document.getElementById("pw").value.trim();
+
+    // パスワード → 対応する plist URL
+    const table = {
+        "ぷにぷに": "https://www.dropbox.com/scl/fi/uxhy3jde8cwg3pn1mrl5k/signed_ywlec34KTeiG.ipa?rlkey=u0rnxk4hjpj97p51x5hb1var1&st=6a0z0cq0&dl=1",
+        "ファンパレ": "https://www.dropbox.com/scl/fi/dhdaqkzwy2zxxd7aizpul/signed_Sbg4Iya0SpO7.ipa?rlkey=bjh9lw9o4jzwow0isn2fwfpb6&st=tvrtthq7&dl=1"
+    };
+
+    if (!(pw in table)) {
+        alert("パスワードが違います");
+        return;
+    }
+
+    // インストール開始
+    const plistURL = encodeURIComponent(table[pw]);
+    const url = "itms-services://?action=download-manifest&url=" + plistURL;
+
+    window.location.href = url;
+}
+</script>
+
 </body>
 </html>
