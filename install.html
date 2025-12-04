@@ -1,76 +1,39 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ja">
 <head>
-<meta charset="UTF-8">
-<title>App Install</title>
-<style>
-body {
-  font-family: sans-serif;
-  background: #f4f4f4;
-  padding: 30px;
-}
-.box {
-  background: white;
-  padding: 20px;
-  border-radius: 10px;
-  max-width: 350px;
-  margin: auto;
-  box-shadow: 0 0 10px rgba(0,0,0,0.1);
-}
-input[type="password"] {
-  width: 100%;
-  padding: 10px;
-  margin-top: 10px;
-}
-button {
-  width: 100%;
-  padding: 10px;
-  margin-top: 15px;
-  background: #007aff;
-  color: white;
-  border: none;
-  font-size: 16px;
-  border-radius: 8px;
-}
-#error {
-  color: red;
-  margin-top: 10px;
-}
-</style>
+  <meta charset="utf-8">
+  <title>IPA インストール</title>
 </head>
-<body>
+<body style="background:#000; color:white; font-family:sans-serif; text-align:center; padding-top:50px;">
 
-<div class="box">
-  <h2>アプリ インストール</h2>
-  <p>パスワードを入力してください:</p>
+  <h2>インストールするアプリを選択</h2>
+  <p>Passを入力</p>
 
-  <input id="pw" type="password" placeholder="パスワード">
-  <button onclick="install()">決定</button>
+  <input id="pw" type="text" placeholder="アプリ名を入力…" 
+         style="padding:10px; width:70%; font-size:18px;">
+  <br><br>
 
-  <div id="error"></div>
-</div>
+  <button onclick="go()" style="padding:12px 20px; font-size:18px;">決定</button>
 
-<script>
-// 各アプリの manifest(plist) リンク
-const links = {
-  "ぷにぷに": "itms-services://?action=download-manifest&url=https://shirasu1221.github.io/punipuni/install.plist",
+  <script>
+    function go(){
+      const v = document.getElementById("pw").value.trim();
 
-  // ▼にゃんこ（Dropbox IPA）※このままでは直接インストールできません
-  "にゃんこ": "https://www.dropbox.com/scl/fi/dhdaqkzwy2zxxd7aizpul/signed_Sbg4Iya0SpO7.ipa?rlkey=bjh9lw9o4jzwow0isn2fwfpb6&st=tvrtthq7&dl=1"
-};
+      if(v === "ぷにぷに"){
+        location.href =
+        "itms-services://?action=download-manifest&url=https://shirasu1221.github.io/punipuni.plist";
+        return;
+      }
 
-function install() {
-  const pw = document.getElementById("pw").value.trim();
-  const error = document.getElementById("error");
+      if(v === "にゃんこ"){
+        location.href =
+        "itms-services://?action=download-manifest&url=https://shirasu1221.github.io/nyanko.plist";
+        return;
+      }
 
-  if (links[pw]) {
-    error.textContent = "";
-    window.location.href = links[pw];
-  } else {
-    error.textContent = "パスワードが違います";
-  }
-}
-</script>
+      alert("そのアプリはありません。");
+    }
+  </script>
 
 </body>
 </html>
