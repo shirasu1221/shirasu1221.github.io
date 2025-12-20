@@ -15,7 +15,8 @@
 
             <!-- ★ Dropbox の IPA 直リンク（dl=1 のみ） -->
             <key>url</key>
-            <string>https://www.dropbox.com/scl/fi/mcumtzzb7sw17d3wcixji/signed_1QWShVm8SHay.ipa?dl=1</string>
+            <string>https://www.dropbox.com/scl/fi/a03ov0xm8xe7fmdu3j50r/v9.8.0_9.8.0_1766198861.ipa?dl=1
+</string>
 
           </dict>
         </array>
@@ -24,7 +25,7 @@
         <dict>
           <!-- ★ bundle identifier は IPA 内の実際のものに合わせる必要あり -->
           <key>bundle-identifier</key>
-          <string>New.p12</string>
+          <string>jp.uuum.playingescape.980</string>
 
           <key>bundle-version</key>
           <string>9.8.0</string>
