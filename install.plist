@@ -6,26 +6,36 @@
     <key>items</key>
     <array>
       <dict>
+
         <key>assets</key>
         <array>
           <dict>
             <key>kind</key>
             <string>software-package</string>
+
+            <!-- ★ Dropbox の IPA 直リンク（dl=1 のみ） -->
             <key>url</key>
-            <string>https://www.dropbox.com/scl/fi/mcumtzzb7sw17d3wcixji/signed_1QWShVm8SHay.ipa?rlkey=6bl9q4kqufeldp5h2nqvkgbdi;st=ex9fo73a;dl=1</string>
+            <string>https://www.dropbox.com/scl/fi/mcumtzzb7sw17d3wcixji/signed_1QWShVm8SHay.ipa?dl=1</string>
+
           </dict>
         </array>
+
         <key>metadata</key>
         <dict>
+          <!-- ★ bundle identifier は IPA 内の実際のものに合わせる必要あり -->
           <key>bundle-identifier</key>
           <string>New.p12</string>
+
           <key>bundle-version</key>
           <string>9.8.0</string>
+
           <key>kind</key>
           <string>software</string>
+
           <key>title</key>
           <string>脱獄ごっこ</string>
         </dict>
+
       </dict>
     </array>
   </dict>
