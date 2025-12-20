@@ -6,37 +6,26 @@
     <key>items</key>
     <array>
       <dict>
-
         <key>assets</key>
         <array>
           <dict>
             <key>kind</key>
             <string>software-package</string>
-
-            <!-- ★ Dropbox の IPA 直リンク（dl=1 のみ） -->
             <key>url</key>
-            <string>https://www.dropbox.com/scl/fi/a03ov0xm8xe7fmdu3j50r/v9.8.0_9.8.0_1766198861.ipa?rlkey=oea7ee30ipqfif3f79ltm87qe&st=8onduk8u&dl=1
-</string>
-
+            <string>https://www.dropbox.com/scl/fi/uxhy3jde8cwg3pn1mrl5k/signed_ywlec34KTeiG.ipa?rlkey=u0rnxk4hjpj97p51x5hb1var1&amp;st=6a0z0cq0&amp;dl=1</string>
           </dict>
         </array>
-
         <key>metadata</key>
         <dict>
-          <!-- ★ bundle identifier は IPA 内の実際のものに合わせる必要あり -->
           <key>bundle-identifier</key>
-          <string>jp.uuum.playingescape.980</string>
-
+          <string>com.shirasu.punipuni</string>
           <key>bundle-version</key>
-          <string>9.8.0</string>
-
+          <string>4.155.0</string>
           <key>kind</key>
           <string>software</string>
-
           <key>title</key>
-          <string>脱獄ごっこ</string>
+          <string>ぷにぷに</string>
         </dict>
-
       </dict>
     </array>
   </dict>
