@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>Blackjack</title>
+
+<style>
+body{font-family:sans-serif;text-align:center;transition:.5s}
+body.day{background:#e6f2ff;color:#000}
+body.night{background:#0b2a3d;color:#fff}
+#clock{position:fixed;top:6px;left:6px;font-weight:bold}
+.card{display:inline-block;margin:4px;padding:6px 10px;border-radius:4px;background:#fff;color:#000}
+body.night .card{background:#222;color:#fff}
+button{margin:4px;padding:6px 14px;font-size:16px}
+#result{font-size:22px;font-weight:bold;margin-top:10px}
+</style>
+</head>
+
+<body>
+<div id="clock"></div>
+
+<h1>Blackjack</h1>
+
+<div>
+💰 Coins: <span id="coins">100</span><br>
+Bet: <input id="bet" type="number" value="100" min="1">
+<button onclick="allBet()">All Bet</button>
+</div>
+
+<h2>Dealer</h2>
+<div id="dealer-cards"></div>
+<div id="dealer-score"></div>
+
+<h2>Player</h2>
+<div id="player-cards"></div>
+<div id="player-score"></div>
+
+<button onclick="hit()">Hit</button>
+<button onclick="stand()">Stand</button>
+<button onclick="doubleDown()">Double Down</button>
+<button onclick="split()">Split</button>
+<button onclick="newGame()">New Game</button>
+
+<div id="result"></div>
+
+<script>
+/* DOM */
+const playerCards=document.getElementById("player-cards");
+const dealerCards=document.getElementById("dealer-cards");
+const playerScore=document.getElementById("player-score");
+const dealerScore=document.getElementById("dealer-score");
+const coinsSpan=document.getElementById("coins");
+const result=document.getElementById("result");
+const betInput=document.getElementById("bet");
+
+/* テーマ */
+function setTheme(){
+ const h=new Date().getHours();
+ document.body.className=(h>=6&&h<18)?"day":"night";
+}
+setTheme();
+
+/* 時計 */
+setInterval(()=>{
+ const d=new Date(),p=n=>n.toString().padStart(2,"0");
+ clock.textContent=`${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
+},1000);
+
+/* 状態 */
+let deck=[],coins=100,hands=[],bets=[],dealerHand=[],activeHand=0,gameOver=true;
+
+/* ゲーム */
+function allBet(){betInput.value=coins}
+
+function createDeck(){
+ const s=["♠","♥","♦","♣"];
+ const v=[["A",11],["2",2],["3",3],["4",4],["5",5],["6",6],
+ ["7",7],["8",8],["9",9],["10",10],["J",10],["Q",10],["K",10]];
+ deck=[];
+ s.forEach(S=>v.forEach(V=>deck.push({n:V[0],v:V[1],s:S})));
+}
+function shuffle(){
+ for(let i=deck.length-1;i>0;i--){
+  const j=Math.floor(Math.random()*(i+1));
+  [deck[i],deck[j]]=[deck[j],deck[i]];
+ }
+}
+function draw(){return deck.pop()}
+function score(h){
+ let t=0,a=0;
+ h.forEach(c=>{t+=c.v;if(c.n==="A")a++});
+ while(t>21&&a>0){t-=10;a--}
+ return t;
+}
+
+function render(){
+ playerCards.innerHTML="";
+ dealerCards.innerHTML="";
+ hands[activeHand]?.forEach(c=>playerCards.innerHTML+=`<span class="card">${c.n}${c.s}</span>`);
+ dealerHand.forEach(c=>dealerCards.innerHTML+=`<span class="card">${c.n}${c.s}</span>`);
+ playerScore.textContent="Score: "+score(hands[activeHand]||[]);
+ dealerScore.textContent="Score: "+score(dealerHand);
+ coinsSpan.textContent=coins;
+}
+
+function newGame(){
+ const bet=+betInput.value;
+ if(bet<=0||bet>coins)return;
+ createDeck();shuffle();
+ coins-=bet;
+ hands=[[draw(),draw()]];
+ bets=[bet];
+ dealerHand=[draw(),draw()];
+ activeHand=0;
+ gameOver=false;
+ result.textContent="";
+ render();
+}
+
+function hit(){
+ if(gameOver||score(hands[activeHand])>=21)return;
+ hands[activeHand].push(draw());
+ if(score(hands[activeHand])>21)nextHand();
+ render();
+}
+
+function stand(){if(!gameOver)nextHand()}
+
+function doubleDown(){
+ const h=hands[activeHand];
+ if(gameOver||h.length!==2||coins<bets[activeHand])return;
+ coins-=bets[activeHand];
+ bets[activeHand]*=2;
+ h.push(draw());
+ nextHand();
+}
+
+function split(){
+ const h=hands[0];
+ if(gameOver||h.length!==2||coins<bets[0])return;
+ if(h[0].v!==h[1].v)return;
+ coins-=bets[0];
+ hands=[[h[0],draw()],[h[1],draw()]];
+ bets=[bets[0],bets[0]];
+ activeHand=0;
+ render();
+}
+
+function nextHand(){
+ if(activeHand+1<hands.length){activeHand++;render();return;}
+ dealerTurn();
+}
+
+function dealerTurn(){
+ while(score(dealerHand)<17)dealerHand.push(draw());
+ const ds=score(dealerHand);
+
+ hands.forEach((h,i)=>{
+  const ps=score(h);
+  if(ps>21)return;
+  if(ps===21&&h.length===2&&ds!==21){
+   coins+=bets[i]*2.5;
+  }else if(ds>21||ps>ds){
+   coins+=bets[i]*2;
+  }else if(ps===ds){
+   coins+=bets[i];
+  }
+ });
+ endGame("Round End");
+}
+
+function endGame(msg){
+ gameOver=true;
+ result.textContent=msg;
+ render();
+}
+</script>
+</body>
+</html>
