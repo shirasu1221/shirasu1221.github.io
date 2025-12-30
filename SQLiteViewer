@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>自作 SQLite Editor</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.6.2/sql-wasm.min.js"></script>
+    <style>
+        body { font-family: sans-serif; padding: 20px; line-height: 1.6; }
+        #drop-area { border: 2px dashed #ccc; padding: 20px; text-align: center; margin-bottom: 20px; }
+        table { border-collapse: collapse; width: 100%; margin-top: 20px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f4f4f4; }
+        input { width: 100%; border: none; background: transparent; }
+        input:focus { background: #eef; outline: none; }
+        .controls { margin-top: 20px; }
+        button { padding: 10px 20px; cursor: pointer; background: #007bff; color: white; border: none; border-radius: 4px; }
+        button:disabled { background: #ccc; }
+    </style>
+</head>
+<body>
+
+    <h1>SQLite Editor (Edit & Save)</h1>
+    <p>jsb.sqlite ファイルを選択して、値を直接書き換えてください。</p>
+
+    <div id="drop-area">
+        <input type="file" id="file-input" accept=".sqlite,.db">
+    </div>
+
+    <div id="table-container"></div>
+
+    <div class="controls">
+        <button id="save-btn" disabled>編集したファイルを保存(Download)</button>
+    </div>
+
+    <script>
+        let db = null;
+        let config = { locateFile: filename => `https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.6.2/${filename}` };
+
+        const fileInput = document.getElementById('file-input');
+        const container = document.getElementById('table-container');
+        const saveBtn = document.getElementById('save-btn');
+
+        // ファイルを読み込む
+        fileInput.onchange = async (e) => {
+            const file = e.target.files[0];
+            const SQL = await initSqlJs(config);
+            const arrayBuffer = await file.arrayBuffer();
+            db = new SQL.Database(new Uint8Array(arrayBuffer));
+            
+            loadTable();
+            saveBtn.disabled = false;
+        };
+
+        // kvテーブルを表示する (Block Blast用)
+        function loadTable() {
+            // 解析の結果、ターゲットは 'kv' テーブルなのでそれを読み込む
+            const res = db.exec("SELECT key, value FROM kv");
+            if (res.length === 0) {
+                container.innerHTML = "kvテーブルが見つかりません。";
+                return;
+            }
+
+            const columns = res[0].columns;
+            const values = res[0].values;
+
+            let html = '<table><thead><tr>';
+            columns.forEach(col => html += `<th>${col}</th>`);
+            html += '</tr></thead><tbody>';
+
+            values.forEach((row, rowIndex) => {
+                html += '<tr>';
+                row.forEach((cell, colIndex) => {
+                    // key列は変更せず、value列(index 1)を編集可能にする
+                    if (colIndex === 1) {
+                        html += `<td><input type="text" value='${cell}' onchange="updateValue('${row[0]}', this.value)"></td>`;
+                    } else {
+                        html += `<td>${cell}</td>`;
+                    }
+                });
+                html += '</tr>';
+            });
+            html += '</tbody></table>';
+            container.innerHTML = html;
+        }
+
+        // メモリ上のDBを更新する
+        window.updateValue = (key, newValue) => {
+            const stmt = db.prepare("UPDATE kv SET value = ? WHERE key = ?");
+            stmt.run([newValue, key]);
+            stmt.free();
+            console.log(`Updated: ${key} = ${newValue}`);
+        };
+
+        // 編集したDBをファイルとしてダウンロード
+        saveBtn.onclick = () => {
+            const data = db.export();
+            const blob = new Blob([data], { type: "application/octet-stream" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = "jsb.sqlite"; // 同じ名前で保存
+            a.click();
+            URL.revokeObjectURL(url);
+        };
+    </script>
+</body>
+</html>
