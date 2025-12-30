@@ -2,99 +2,92 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>Score Editor Pro</title>
+    <title>Block Blast HighScore Hack</title>
     <style>
-        body { font-family: sans-serif; padding: 20px; background-color: #f4f7f9; }
-        .container { max-width: 600px; margin: auto; background: white; padding: 30px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
-        h1 { font-size: 20px; color: #007aff; text-align: center; }
-        .progress-container { width: 100%; background-color: #e0e0e0; border-radius: 10px; margin: 20px 0; display: none; }
-        .progress-bar { width: 0%; height: 20px; background-color: #34c759; border-radius: 10px; transition: width 0.3s; text-align: center; color: white; font-size: 12px; line-height: 20px; }
-        button { width: 100%; padding: 15px; background-color: #007aff; color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; }
-        button:disabled { background-color: #ccc; }
-        #status { margin-top: 15px; font-size: 14px; text-align: center; }
-        .error { color: #ff3b30; }
+        body { font-family: -apple-system, sans-serif; padding: 20px; background-color: #f0f2f5; }
+        .card { max-width: 500px; margin: auto; background: white; padding: 25px; border-radius: 15px; box-shadow: 0 4px 20px rgba(0,0,0,0.15); }
+        h1 { color: #007aff; text-align: center; font-size: 22px; }
+        #drop-area { border: 2px dashed #007aff; padding: 30px; text-align: center; border-radius: 10px; background: #f8fbff; cursor: pointer; }
+        .progress-container { width: 100%; background: #eee; border-radius: 10px; margin: 20px 0; display: none; }
+        .progress-bar { width: 0%; height: 20px; background: #34c759; border-radius: 10px; transition: 0.3s; text-align: center; color: white; font-size: 12px; line-height: 20px; }
+        button { width: 100%; padding: 15px; background: #007aff; color: white; border: none; border-radius: 8px; font-weight: bold; font-size: 16px; cursor: pointer; }
+        button:disabled { background: #ccc; }
+        #status { margin-top: 15px; text-align: center; font-size: 14px; color: #555; }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <h1>Score Editor (Auto-Fix)</h1>
-    <input type="file" id="fileInput" accept=".sqlite">
-    <div class="progress-container" id="progressContainer"><div class="progress-bar" id="progressBar">0%</div></div>
-    <button id="saveBtn" disabled>編集して保存（ダウンロード）</button>
-    <div id="status">ファイルを選択してください</div>
+<div class="card">
+    <h1>Score Editor</h1>
+    <div id="drop-area" onclick="document.getElementById('fileInput').click()">
+        <strong>ここをタップして jsb.sqlite を選択</strong>
+        <input type="file" id="fileInput" accept=".sqlite" style="display:none">
+    </div>
+
+    <div class="progress-container" id="progressContainer">
+        <div class="progress-bar" id="progressBar">0%</div>
+    </div>
+
+    <button id="saveBtn" disabled>ハイスコアを 999999 にして保存</button>
+    <div id="status">48685 を探し出して書き換えます</div>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.6.2/sql-wasm.min.js"></script>
 
 <script>
     let db = null;
-    const saveBtn = document.getElementById('saveBtn');
-    const status = document.getElementById('status');
-    const progressBar = document.getElementById('progressBar');
-    const progressContainer = document.getElementById('progressContainer');
+    const targetScore = "48685"; // あなたの現在のスコア
 
     function updateProgress(percent, text) {
-        progressContainer.style.display = 'block';
-        progressBar.style.width = percent + '%';
-        progressBar.innerText = text || percent + '%';
+        document.getElementById('progressContainer').style.display = 'block';
+        const bar = document.getElementById('progressBar');
+        bar.style.width = percent + '%';
+        bar.innerText = text || percent + '%';
     }
 
-    fileInput.onchange = async (e) => {
+    document.getElementById('fileInput').onchange = async (e) => {
         const file = e.target.files[0];
         if (!file) return;
         try {
-            updateProgress(30, '準備中...');
+            updateProgress(30, '読み込み中...');
             const config = { locateFile: f => `https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.6.2/${f}` };
             const SQL = await initSqlJs(config);
-            const arrayBuffer = await file.arrayBuffer();
-            db = new SQL.Database(new Uint8Array(arrayBuffer));
-            
-            // 全テーブルを表示してデバッグ
-            const tables = db.exec("SELECT name FROM sqlite_master WHERE type='table'");
-            console.log("Found tables:", tables);
-            
+            const ab = await file.arrayBuffer();
+            db = new SQL.Database(new Uint8Array(ab));
             updateProgress(100, '読み込み完了');
-            status.innerHTML = "ファイルを正常に読み込みました。";
-            saveBtn.disabled = false;
+            document.getElementById('saveBtn').disabled = false;
         } catch (err) {
-            status.innerHTML = `<span class="error">読み込みエラー: ${err.message}</span>`;
+            alert("エラー: " + err.message);
         }
     };
 
-    saveBtn.onclick = () => {
+    document.getElementById('saveBtn').onclick = () => {
         try {
-            updateProgress(50, '書き換え中...');
+            updateProgress(50, '置換中...');
+
+            // 1. 全テーブルの全カラムをスキャンして、48685 を 999999 に置換
+            const tables = db.exec("SELECT name FROM sqlite_master WHERE type='table'")[0].values;
             
-            // 書き換えたいデータ
-            const newScoreJSON = JSON.stringify({
-                "comboMaxNum": 9999,
-                "comboRoundNum": 9999,
-                "highScore": 999999,
-                "clearNum": 9999,
-                "eliminateAll": 9999
+            tables.forEach(tRow => {
+                const table = tRow[0];
+                // 'value' というカラムがあることを想定して置換（REPLACE）を実行
+                try {
+                    db.run(`UPDATE ${table} SET value = REPLACE(CAST(value AS TEXT), ?, '999999')`, [targetScore]);
+                } catch(e) { console.log("Skip:", table); }
             });
 
-            // 【対策】テーブル名を動的に探して実行する
-            const tableList = db.exec("SELECT name FROM sqlite_master WHERE type='table'")[0].values;
-            let success = false;
+            // 2. 統計情報(JSON)を最強に書き換え
+            const statsKey = 'block-blast-classDataStatisticsInfo';
+            const bigStats = JSON.stringify({
+                "comboMaxNum": 999,
+                "comboRoundNum": 888,
+                "eliminateCols": 777,
+                "highScore": 999999, // ここに注入
+                "clearNum": 555
+            });
+            db.run(`UPDATE kv SET value = ? WHERE key = ?`, [bigStats, statsKey]);
 
-            for (const tRow of tableList) {
-                const tableName = tRow[0];
-                try {
-                    // key列が存在するテーブルに対して更新を試みる
-                    db.run(`UPDATE ${tableName} SET value = ? WHERE key LIKE '%StatisticsInfo%'`, [newScoreJSON]);
-                    // もしhighScoreという直接のキーがあればそれも更新
-                    db.run(`UPDATE ${tableName} SET value = '999999' WHERE key LIKE '%highScore%'`);
-                    success = true;
-                } catch (e) {
-                    console.log(`Skip table: ${tableName}`);
-                }
-            }
-
-            if (!success) throw new Error("適切なデータテーブルが見つかりませんでした。");
-
-            updateProgress(90, '生成中...');
+            updateProgress(90, 'ファイル生成中...');
             const data = db.export();
             const blob = new Blob([data], { type: 'application/octet-stream' });
             const a = document.createElement("a");
@@ -103,11 +96,12 @@
             a.click();
 
             updateProgress(100, '完了！');
-            status.innerText = "ダウンロードされました！";
+            alert("48685 を 999999 に書き換えました！\nファイルを戻してアプリを再起動してください。");
         } catch (err) {
-            status.innerHTML = `<span class="error">保存エラー: ${err.message}</span>`;
+            alert("保存エラー: " + err.message);
         }
     };
 </script>
+
 </body>
 </html>
