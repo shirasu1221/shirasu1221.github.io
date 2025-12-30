@@ -36,7 +36,7 @@
 
 <script>
     let db = null;
-    const targetScore = "48685"; 
+    const targetScore = "999999"; 
 
     function updateProgress(percent, text) {
         document.getElementById('progressContainer').style.display = 'block';
@@ -85,7 +85,7 @@
                         const columnName = cRow[1];
                         try {
                             // 48685 という数値・文字列が含まれる箇所をすべて 999999 に書き換える
-                            db.run(`UPDATE ${tableName} SET ${columnName} = REPLACE(CAST(${columnName} AS TEXT), ?, '999999') WHERE CAST(${columnName} AS TEXT) LIKE ?`, [targetScore, `%${targetScore}%`]);
+                            db.run(`UPDATE ${tableName} SET ${columnName} = REPLACE(CAST(${columnName} AS TEXT), ?, '9999999999') WHERE CAST(${columnName} AS TEXT) LIKE ?`, [targetScore, `%${targetScore}%`]);
                             totalUpdated++;
                         } catch (e) {
                             console.log(`Skip column ${columnName} in ${tableName}`);
