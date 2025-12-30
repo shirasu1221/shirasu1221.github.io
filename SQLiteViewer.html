@@ -2,23 +2,23 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>Block Blast HighScore Hack</title>
+    <title>Block Blast Ultimate Score Editor</title>
     <style>
         body { font-family: -apple-system, sans-serif; padding: 20px; background-color: #f0f2f5; }
-        .card { max-width: 500px; margin: auto; background: white; padding: 25px; border-radius: 15px; box-shadow: 0 4px 20px rgba(0,0,0,0.15); }
-        h1 { color: #007aff; text-align: center; font-size: 22px; }
-        #drop-area { border: 2px dashed #007aff; padding: 30px; text-align: center; border-radius: 10px; background: #f8fbff; cursor: pointer; }
+        .card { max-width: 550px; margin: auto; background: white; padding: 25px; border-radius: 15px; box-shadow: 0 4px 20px rgba(0,0,0,0.15); }
+        h1 { color: #ff3b30; text-align: center; font-size: 22px; }
+        #drop-area { border: 2px dashed #007aff; padding: 30px; text-align: center; border-radius: 10px; background: #f8fbff; cursor: pointer; margin-bottom: 20px; }
         .progress-container { width: 100%; background: #eee; border-radius: 10px; margin: 20px 0; display: none; }
         .progress-bar { width: 0%; height: 20px; background: #34c759; border-radius: 10px; transition: 0.3s; text-align: center; color: white; font-size: 12px; line-height: 20px; }
         button { width: 100%; padding: 15px; background: #007aff; color: white; border: none; border-radius: 8px; font-weight: bold; font-size: 16px; cursor: pointer; }
         button:disabled { background: #ccc; }
-        #status { margin-top: 15px; text-align: center; font-size: 14px; color: #555; }
+        #status { margin-top: 15px; text-align: center; font-size: 13px; color: #555; white-space: pre-wrap; }
     </style>
 </head>
 <body>
 
 <div class="card">
-    <h1>Score Editor</h1>
+    <h1>Score Editor (Deep Scan)</h1>
     <div id="drop-area" onclick="document.getElementById('fileInput').click()">
         <strong>ここをタップして jsb.sqlite を選択</strong>
         <input type="file" id="fileInput" accept=".sqlite" style="display:none">
@@ -28,15 +28,15 @@
         <div class="progress-bar" id="progressBar">0%</div>
     </div>
 
-    <button id="saveBtn" disabled>ハイスコアを 999999 にして保存</button>
-    <div id="status">48685 を探し出して書き換えます</div>
+    <button id="saveBtn" disabled>全データをスキャンして 999999 に置換</button>
+    <div id="status">現在のスコア 48685 を全自動で探し出します</div>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.6.2/sql-wasm.min.js"></script>
 
 <script>
     let db = null;
-    const targetScore = "48685"; // あなたの現在のスコア
+    const targetScore = "48685"; 
 
     function updateProgress(percent, text) {
         document.getElementById('progressContainer').style.display = 'block';
@@ -49,45 +49,54 @@
         const file = e.target.files[0];
         if (!file) return;
         try {
-            updateProgress(30, '読み込み中...');
+            updateProgress(30, 'SQLite エンジン起動中...');
             const config = { locateFile: f => `https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.6.2/${f}` };
             const SQL = await initSqlJs(config);
             const ab = await file.arrayBuffer();
             db = new SQL.Database(new Uint8Array(ab));
-            updateProgress(100, '読み込み完了');
+            updateProgress(100, '準備完了');
             document.getElementById('saveBtn').disabled = false;
         } catch (err) {
-            alert("エラー: " + err.message);
+            document.getElementById('status').innerText = "エラー: " + err.message;
         }
     };
 
     document.getElementById('saveBtn').onclick = () => {
         try {
-            updateProgress(50, '置換中...');
-
-            // 1. 全テーブルの全カラムをスキャンして、48685 を 999999 に置換
-            const tables = db.exec("SELECT name FROM sqlite_master WHERE type='table'")[0].values;
+            updateProgress(20, 'テーブル構造を解析中...');
             
+            // 1. 存在するすべてのテーブル名を取得
+            const tablesRes = db.exec("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'");
+            if (!tablesRes.length) throw new Error("テーブルが見つかりません。ファイルが空か壊れている可能性があります。");
+            
+            const tables = tablesRes[0].values;
+            let totalUpdated = 0;
+
+            // 2. 各テーブルの各カラム（列）に対して置換を実行
             tables.forEach(tRow => {
-                const table = tRow[0];
-                // 'value' というカラムがあることを想定して置換（REPLACE）を実行
-                try {
-                    db.run(`UPDATE ${table} SET value = REPLACE(CAST(value AS TEXT), ?, '999999')`, [targetScore]);
-                } catch(e) { console.log("Skip:", table); }
+                const tableName = tRow[0];
+                
+                // テーブル内のカラム一覧を取得
+                const columnsRes = db.exec(`PRAGMA table_info(${tableName})`);
+                if (columnsRes.length) {
+                    const columns = columnsRes[0].values;
+                    
+                    columns.forEach(cRow => {
+                        const columnName = cRow[1];
+                        try {
+                            // 48685 という数値・文字列が含まれる箇所をすべて 999999 に書き換える
+                            db.run(`UPDATE ${tableName} SET ${columnName} = REPLACE(CAST(${columnName} AS TEXT), ?, '999999') WHERE CAST(${columnName} AS TEXT) LIKE ?`, [targetScore, `%${targetScore}%`]);
+                            totalUpdated++;
+                        } catch (e) {
+                            console.log(`Skip column ${columnName} in ${tableName}`);
+                        }
+                    });
+                }
             });
 
-            // 2. 統計情報(JSON)を最強に書き換え
-            const statsKey = 'block-blast-classDataStatisticsInfo';
-            const bigStats = JSON.stringify({
-                "comboMaxNum": 999,
-                "comboRoundNum": 888,
-                "eliminateCols": 777,
-                "highScore": 999999, // ここに注入
-                "clearNum": 555
-            });
-            db.run(`UPDATE kv SET value = ? WHERE key = ?`, [bigStats, statsKey]);
+            updateProgress(80, '書き換え完了、保存中...');
 
-            updateProgress(90, 'ファイル生成中...');
+            // 3. ファイルの書き出し
             const data = db.export();
             const blob = new Blob([data], { type: 'application/octet-stream' });
             const a = document.createElement("a");
@@ -95,13 +104,13 @@
             a.download = 'jsb.sqlite';
             a.click();
 
-            updateProgress(100, '完了！');
-            alert("48685 を 999999 に書き換えました！\nファイルを戻してアプリを再起動してください。");
+            updateProgress(100, '成功！');
+            document.getElementById('status').innerText = `スキャン完了！\n${totalUpdated}箇所のデータフィールドを確認しました。\nダウンロードされたファイルを上書きしてください。`;
         } catch (err) {
             alert("保存エラー: " + err.message);
+            document.getElementById('status').innerText = "エラー詳細: " + err.message;
         }
     };
 </script>
-
 </body>
 </html>
