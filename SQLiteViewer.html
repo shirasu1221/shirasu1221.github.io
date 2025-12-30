@@ -1,44 +1,57 @@
-// 1. データベースの初期化とファイル読み込み
-let db = null;
-
-async function loadFile(file) {
-    const SQL = await initSqlJs({
-        locateFile: file => `https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.6.2/${file}`
-    });
-    const arrayBuffer = await file.arrayBuffer();
-    db = new SQL.Database(new Uint8Array(arrayBuffer));
-    console.log("Database Loaded!");
-    displayData();
-}
-
-// 2. データの表示（kvテーブルに特化）
-function displayData() {
-    const res = db.exec("SELECT key, value FROM kv");
-    const container = document.getElementById('output');
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>SQLite Editor</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.6.2/sql-wasm.min.js"></script>
+</head>
+<body>
+    <h2>Block Blast スコア編集ツール</h2>
     
-    let html = '<table>';
-    res[0].values.forEach(row => {
-        html += `<tr>
-            <td>${row[0]}</td>
-            <td><input type="text" value='${row[1]}' onchange="updateRecord('${row[0]}', this.value)"></td>
-        </tr>`;
-    });
-    html += '</table>';
-    container.innerHTML = html;
-}
+    <input type="file" id="fileInput">
+    <br><br>
+    
+    <button id="saveBtn" disabled>編集して保存（ダウンロード）</button>
 
-// 3. データの書き換え（SQLのUPDATE文を実行）
-function updateRecord(key, newValue) {
-    db.run("UPDATE kv SET value = ? WHERE key = ?", [newValue, key]);
-    console.log(`Updated ${key} to ${newValue}`);
-}
+    <div id="output" style="margin-top:20px;"></div>
 
-// 4. 編集したDBをバイナリとして保存（ダウンロード）
-function exportDB() {
-    const binaryArray = db.export();
-    const blob = new Blob([binaryArray], { type: 'application/octet-stream' });
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.download = 'jsb.sqlite';
-    link.click();
-}
+    <script>
+        // ここにJavaScriptの命令を書きます
+        let db = null;
+        const config = { locateFile: file => `https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.6.2/${file}` };
+
+        document.getElementById('fileInput').onchange = async (e) => {
+            const file = e.target.files[0];
+            const SQL = await initSqlJs(config);
+            const arrayBuffer = await file.arrayBuffer();
+            db = new SQL.Database(new Uint8Array(arrayBuffer));
+            
+            // 読み込めたら保存ボタンを押せるようにする
+            document.getElementById('saveBtn').disabled = false;
+            alert("ファイルが読み込まれました。これから自動でスコアを999999に書き換えます。");
+        };
+
+        document.getElementById('saveBtn').onclick = () => {
+            // スコアが含まれるJSONデータを強制的に書き換える命令
+            const newScoreData = JSON.stringify({
+                "comboMaxNum": 999,
+                "eliminateAll": 999,
+                "highScore": 999999,
+                "clearNum": 999
+            });
+
+            // SQLでデータベースを更新
+            db.run("UPDATE kv SET value = ? WHERE key = 'block-blast-classDataStatisticsInfo'", [newScoreData]);
+
+            // 書き換えたデータをファイルとして出力
+            const data = db.export();
+            const blob = new Blob([data], { type: 'application/octet-stream' });
+            const a = document.createElement("a");
+            a.href = URL.createObjectURL(blob);
+            a.download = 'jsb.sqlite'; // 名前を同じにしてダウンロード
+            a.click();
+            alert("保存しました！このファイルをEsignで上書きしてください。");
+        };
+    </script>
+</body>
+</html>
