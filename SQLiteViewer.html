@@ -1,57 +1,121 @@
 <!DOCTYPE html>
-<html>
+<html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>SQLite Editor</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.6.2/sql-wasm.min.js"></script>
+    <title>SQLite Viewer & Editor</title>
+    <style>
+        body { font-family: sans-serif; padding: 20px; background-color: #f4f7f9; color: #333; }
+        .container { max-width: 600px; margin: auto; background: white; padding: 30px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        h1 { font-size: 20px; color: #007aff; text-align: center; }
+        
+        /* 進捗バーのスタイル */
+        .progress-container { width: 100%; background-color: #e0e0e0; border-radius: 10px; margin: 20px 0; display: none; }
+        .progress-bar { width: 0%; height: 20px; background-color: #34c759; border-radius: 10px; transition: width 0.3s; text-align: center; color: white; font-size: 12px; line-height: 20px; }
+        
+        input[type="file"] { display: block; margin: 20px auto; }
+        button { width: 100%; padding: 15px; background-color: #007aff; color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; }
+        button:disabled { background-color: #ccc; cursor: not-allowed; }
+        #status { margin-top: 15px; font-size: 14px; text-align: center; color: #666; }
+        .error { color: #ff3b30; font-weight: bold; }
+    </style>
 </head>
 <body>
-    <h2>Block Blast スコア編集ツール</h2>
+
+<div class="container">
+    <h1>Score Editor</h1>
     
-    <input type="file" id="fileInput">
-    <br><br>
-    
+    <input type="file" id="fileInput" accept=".sqlite">
+
+    <div class="progress-container" id="progressContainer">
+        <div class="progress-bar" id="progressBar">0%</div>
+    </div>
+
     <button id="saveBtn" disabled>編集して保存（ダウンロード）</button>
+    
+    <div id="status">ファイルを選択してください</div>
+</div>
 
-    <div id="output" style="margin-top:20px;"></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.6.2/sql-wasm.min.js"></script>
 
-    <script>
-        // ここにJavaScriptの命令を書きます
-        let db = null;
-        const config = { locateFile: file => `https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.6.2/${file}` };
+<script>
+    let db = null;
+    const fileInput = document.getElementById('fileInput');
+    const saveBtn = document.getElementById('saveBtn');
+    const status = document.getElementById('status');
+    const progressContainer = document.getElementById('progressContainer');
+    const progressBar = document.getElementById('progressBar');
 
-        document.getElementById('fileInput').onchange = async (e) => {
-            const file = e.target.files[0];
+    function updateProgress(percent, text) {
+        progressContainer.style.display = 'block';
+        progressBar.style.width = percent + '%';
+        progressBar.innerText = text || percent + '%';
+    }
+
+    // 1. ファイル読み込み
+    fileInput.onchange = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        try {
+            updateProgress(20, 'ライブラリ初期化中...');
+            const config = { locateFile: file => `https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.6.2/${file}` };
             const SQL = await initSqlJs(config);
+            
+            updateProgress(50, 'ファイル解析中...');
             const arrayBuffer = await file.arrayBuffer();
             db = new SQL.Database(new Uint8Array(arrayBuffer));
             
-            // 読み込めたら保存ボタンを押せるようにする
-            document.getElementById('saveBtn').disabled = false;
-            alert("ファイルが読み込まれました。これから自動でスコアを999999に書き換えます。");
-        };
+            updateProgress(100, '準備完了！');
+            status.innerHTML = "ファイルを読み込みました。<br>「編集して保存」を押すとスコアが書き換わります。";
+            saveBtn.disabled = false;
+        } catch (err) {
+            status.innerHTML = `<span class="error">エラー: ${err.message}</span>`;
+            console.error(err);
+        }
+    };
 
-        document.getElementById('saveBtn').onclick = () => {
-            // スコアが含まれるJSONデータを強制的に書き換える命令
+    // 2. 編集と保存
+    saveBtn.onclick = () => {
+        try {
+            status.innerText = "書き換え中...";
+            updateProgress(30, 'データ加工中...');
+
+            // あなたのjsb.sqliteの構造に合わせた更新処理
             const newScoreData = JSON.stringify({
-                "comboMaxNum": 999,
-                "eliminateAll": 999,
-                "highScore": 999999,
-                "clearNum": 999
+                "comboMaxNum": 9999,
+                "comboRoundNum": 9999,
+                "comboTouchNum": 1,
+                "eliminateCols": 9999,
+                "eliminateRows": 9999,
+                "eliminateAll": 9999,
+                "eliminate1": 9999,
+                "eliminate2": 9999,
+                "clearNum": 9999,
+                "highScore": 999999 // ハイスコアを注入
             });
 
-            // SQLでデータベースを更新
+            updateProgress(60, 'データベース更新中...');
+            // キーが存在するか確認しながらアップデート
             db.run("UPDATE kv SET value = ? WHERE key = 'block-blast-classDataStatisticsInfo'", [newScoreData]);
 
-            // 書き換えたデータをファイルとして出力
+            updateProgress(80, 'ファイル生成中...');
             const data = db.export();
             const blob = new Blob([data], { type: 'application/octet-stream' });
+            
             const a = document.createElement("a");
             a.href = URL.createObjectURL(blob);
-            a.download = 'jsb.sqlite'; // 名前を同じにしてダウンロード
+            a.download = 'jsb.sqlite';
+            document.body.appendChild(a);
             a.click();
-            alert("保存しました！このファイルをEsignで上書きしてください。");
-        };
-    </script>
+            document.body.removeChild(a);
+
+            updateProgress(100, '完了！');
+            status.innerText = "ダウンロードが開始されました！";
+        } catch (err) {
+            status.innerHTML = `<span class="error">保存エラー: ${err.message}</span>`;
+        }
+    };
+</script>
+
 </body>
 </html>
