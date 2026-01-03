@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>【デモ】ウイルス警告シミュレーション</title>
+<style>
+  :root{
+    --bg:#0f1220;
+    --card:#15193a;
+    --danger:#ff4d4f;
+    --warn:#ffcc00;
+    --ok:#4caf50;
+    --text:#e9ebff;
+    --muted:#b9bdf5;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Ubuntu,"Helvetica Neue",Arial;
+    background:radial-gradient(1200px 600px at 10% 0%, #1a1f55 0%, #0f1220 40%);
+    color:var(--text);
+  }
+  .wrap{min-height:100vh; display:flex; align-items:center; justify-content:center; padding:16px}
+  .card{
+    width:min(760px, 100%);
+    background:linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02)) , var(--card);
+    border:1px solid rgba(255,255,255,.08);
+    border-radius:14px;
+    box-shadow:0 20px 60px rgba(0,0,0,.35);
+    overflow:hidden;
+  }
+  .bar{
+    background:linear-gradient(90deg, #ff6b6b, #ff4d4f);
+    padding:10px 16px; font-weight:700; letter-spacing:.02em
+  }
+  .content{padding:20px}
+  .badge{
+    display:inline-block; padding:6px 10px; border-radius:999px; font-size:12px; font-weight:700;
+    background:rgba(255,77,79,.15); color:#ffd6d7; border:1px solid rgba(255,77,79,.35)
+  }
+  h1{margin:10px 0 8px; font-size:28px}
+  p{margin:8px 0; color:var(--muted)}
+  .panel{
+    margin:16px 0; padding:14px; border-radius:10px;
+    background:rgba(0,0,0,.25); border:1px dashed rgba(255,255,255,.18)
+  }
+  ul{margin:8px 0 0 18px}
+  .actions{display:flex; gap:12px; flex-wrap:wrap; margin-top:16px}
+  .btn{
+    appearance:none; border:1px solid rgba(255,255,255,.2);
+    background:#1e245f; color:#fff; padding:12px 16px; border-radius:10px; font-weight:700;
+    text-decoration:none; cursor:pointer
+  }
+  .btn.warn{background:#5a1b1c; border-color:#ff4d4f}
+  .btn.ok{background:#1b5a2b; border-color:#4caf50}
+  .btn:focus{outline:2px solid #9aa1ff; outline-offset:2px}
+  .footer{
+    padding:12px 16px; background:rgba(0,0,0,.25); border-top:1px solid rgba(255,255,255,.08);
+    font-size:12px; color:#c9cdfa
+  }
+  .demo{
+    background:rgba(255,204,0,.12); border:1px solid rgba(255,204,0,.45);
+    color:#fff3bf; padding:10px 12px; border-radius:10px; margin-bottom:12px
+  }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card" role="alert" aria-live="assertive">
+      <div class="bar">セキュリティ警告</div>
+      <div class="content">
+
+        <span class="badge">検出: 高</span>
+        <h1>脅威は検出されませんでした.</h1></p>
+
+        <div class="panel">
+          <strong>想定される被害</strong>
+          <ul>
+            <li>最新のアップデートが可能になる</li>
+            <li>友達を消去</li>
+            <li>ブラウザを破壊</li>
+          </ul>
+        </div>
+        <div class="panel">
+         <strong>検出されたipアドレス</strong>
+         <ul>159.102.105.250</ul>
+         </div class="panel">
+        <div class="actions">
+        <p>以下のボタンから最新のウイルスをダウンロード.</p>
+          <a class="btn ok" href="https://ggrks.lol" target="_blank" rel="noopener noreferrer">
+            ダウンロード
+          </a>
+          </button>
+        </div>
+      </div>
+      <div class="footer">
+        ©︎China.Ltc.Korehikkakaru.Aho
+      </div>
+    </div>
+  </div>
+</body>
+</html>
