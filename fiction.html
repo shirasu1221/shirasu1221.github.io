@@ -3,103 +3,115 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>ウイルス警告シミュ</title>
+<title>システム警告</title>
 <style>
   :root{
     --bg:#0f1220;
     --card:#15193a;
     --danger:#ff4d4f;
-    --warn:#ffcc00;
-    --ok:#4caf50;
     --text:#e9ebff;
     --muted:#b9bdf5;
   }
   *{box-sizing:border-box}
   body{
-    margin:0; font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Ubuntu,"Helvetica Neue",Arial;
+    margin:0; font-family:sans-serif;
     background:radial-gradient(1200px 600px at 10% 0%, #1a1f55 0%, #0f1220 40%);
     color:var(--text);
+    display:flex; align-items:center; justify-content:center; min-height:100vh;
   }
-  .wrap{min-height:100vh; display:flex; align-items:center; justify-content:center; padding:16px}
   .card{
-    width:min(760px, 100%);
-    background:linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02)) , var(--card);
-    border:1px solid rgba(255,255,255,.08);
-    border-radius:14px;
-    box-shadow:0 20px 60px rgba(0,0,0,.35);
+    width:min(600px, 95%);
+    background:var(--card);
+    border:1px solid rgba(255,255,255,.1);
+    border-radius:12px;
+    box-shadow:0 25px 50px rgba(0,0,0,0.5);
     overflow:hidden;
   }
   .bar{
-    background:linear-gradient(90deg, #ff6b6b, #ff4d4f);
-    padding:10px 16px; font-weight:700; letter-spacing:.02em
+    background:#ff4d4f; padding:12px; font-weight:bold; text-align:center;
   }
-  .content{padding:20px}
+  .content{padding:24px}
   .badge{
-    display:inline-block; padding:6px 10px; border-radius:999px; font-size:12px; font-weight:700;
-    background:rgba(255,77,79,.15); color:#ffd6d7; border:1px solid rgba(255,77,79,.35)
+    background:rgba(255,77,79,0.2); color:#ffccc7;
+    padding:4px 12px; border-radius:4px; font-size:12px; border:1px solid #ff4d4f;
   }
-  h1{margin:10px 0 8px; font-size:28px}
-  p{margin:8px 0; color:var(--muted)}
+  h1{font-size:22px; margin:16px 0}
+  .progress-box{
+    background:rgba(0,0,0,0.3); height:10px; border-radius:5px; margin:20px 0; overflow:hidden;
+  }
+  .progress-bar{
+    background:#ff4d4f; height:100%; width:0%; transition:width 0.5s;
+  }
   .panel{
-    margin:16px 0; padding:14px; border-radius:10px;
-    background:rgba(0,0,0,.25); border:1px dashed rgba(255,255,255,.18)
+    background:rgba(255,255,255,0.05); padding:15px; border-radius:8px; margin-bottom:15px;
   }
-  ul{margin:8px 0 0 18px}
-  .actions{display:flex; gap:12px; flex-wrap:wrap; margin-top:16px}
+  .panel ul{margin:10px 0 0 20px; color:var(--muted); font-size:14px}
   .btn{
-    appearance:none; border:1px solid rgba(255,255,255,.2);
-    background:#1e245f; color:#fff; padding:12px 16px; border-radius:10px; font-weight:700;
-    text-decoration:none; cursor:pointer
+    display:block; width:100%; padding:15px; background:#ff4d4f; color:#fff;
+    text-align:center; text-decoration:none; border-radius:8px; font-weight:bold;
+    transition: background 0.2s, transform 0.1s;
   }
-  .btn.warn{background:#5a1b1c; border-color:#ff4d4f}
-  .btn.ok{background:#1b5a2b; border-color:#4caf50}
-  .btn:focus{outline:2px solid #9aa1ff; outline-offset:2px}
-  .footer{
-    padding:12px 16px; background:rgba(0,0,0,.25); border-top:1px solid rgba(255,255,255,.08);
-    font-size:12px; color:#c9cdfa
+  .btn:hover{
+    background:#ff7875;
   }
-  .demo{
-    background:rgba(255,204,0,.12); border:1px solid rgba(255,204,0,.45);
-    color:#fff3bf; padding:10px 12px; border-radius:10px; margin-bottom:12px
+  .btn:active{
+    transform: scale(0.98);
   }
+  .footer-info{font-size:11px; color:#666; margin-top:20px; text-align:center}
 </style>
 </head>
 <body>
-  <div class="wrap">
-    <div class="card" role="alert" aria-live="assertive">
-      <div class="bar">セキュリティ警告</div>
-      <div class="content">
 
-        <span class="badge">検出: 高</span>
-        <h1>脅威は検出されませんでした. 532件のトロイの木馬.</h1>
+  <div class="card">
+    <div class="bar">⚠️ セキュリティシステム警告</div>
+    <div class="content">
+      <span class="badge" id="status-badge">スキャン完了</span>
+      <h1 id="main-msg">システムがトロイの木馬に感染している可能性があります。</h1>
+      
+      <div class="progress-box"><div class="progress-bar" id="p-bar"></div></div>
 
-        <div class="panel">
-          <strong>想定される被害</strong>
-          <ul>
-            <li>最新のリンゴ電子機器のニュースが可能になう！！！！！！</li>
-            <li>友達をアンインストール</li>
-            <li>ブラウザをSafariからGoogleに置き換え</li>
-          </ul>
-        </div>
-        <div class="panel">
-         <strong>検出されたipアドレス</strong>
-         <ul>159.102.105.250</ul>
-         </div class="panel">
-         <div class="panel">
-        <div class="actions">
-        <strong>対処する方法</strong>
-        <ul>以下のボタンから最新のウイルスをダウンロード.</ul>
-          <a class="btn ok" href="https://www.google.com/search?q=%E3%82%A4%E3%83%B3%E3%82%BF%E3%83%BC%E3%83%8D%E3%83%83%E3%83%88%E3%82%84%E3%82%81%E3%82%8D" target="_blank" rel="noopener noreferrer">
-            ダウンロード
-          </a>
-          </button>
-        </div>
-        </div>
+      <div class="panel">
+        <strong>検出された脅威: (3) 件のウイルス</strong>
+        <ul>
+          <li>トロイの木馬 (Trojan.Generic.DS)</li>
+          <li>スパイウェア (Data.Stealer.ID)</li>
+          <li>ブラウザ・ハイジャッカー</li>
+        </ul>
       </div>
-      <div class="footer">
-        ©︎China.Ltc.Korehikkakaru.Aho
+
+      <div class="panel">
+        <strong>デバイス情報:</strong>
+        <div id="device-info" style="font-size:13px; margin-top:5px; color:#aaa;">スキャン日時: <span id="current-time"></span></div>
+      </div>
+
+      <p style="font-size:14px; color:var(--muted); line-height:1.6;">
+        注意：このまま放置すると、写真、連絡先、および銀行口座情報が流出する恐れがあります。直ちに保護プロセスを開始してください。
+      </p>
+
+      <a href="https://www.google.com/search?q=%E3%82%A4%E3%83%B3%E3%82%BF%E3%83%BC%E3%83%8D%E3%83%83%E3%83%88%E3%82%84%E3%82%81%E3%82%8D" class="btn" target="_blank" rel="noopener noreferrer">
+        今すぐ修復して保護を有効にする
+      </a>
+      
+      <div class="footer-info">
+        © 2026 Security Support Center. All Rights Reserved.
       </div>
     </div>
   </div>
+
+  <script>
+    setTimeout(() => {
+      document.getElementById('p-bar').style.width = '100%';
+    }, 500);
+
+    const now = new Date();
+    document.getElementById('current-time').innerText = now.toLocaleString();
+
+    const ua = navigator.userAgent;
+    let browser = "不明なデバイス";
+    if(ua.indexOf("Chrome") > -1) browser = "Google Chrome";
+    else if(ua.indexOf("Safari") > -1) browser = "Apple Safari";
+    
+    document.getElementById('device-info').prepend(browser + " 内の脅威 - ");
+  </script>
 </body>
 </html>
