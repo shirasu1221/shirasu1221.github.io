@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>Tetris Pro - Ultra Smooth Edition</title>
+    <style>
+        body { 
+            background: #020205; color: #fff; font-family: 'Segoe UI', sans-serif; 
+            display: flex; align-items: center; justify-content: center; 
+            height: 100vh; margin: 0; overflow: hidden; position: fixed; width: 100%;
+            touch-action: none;
+        }
+        .stage { display: flex; gap: 150px; align-items: center; scale: 0.85; }
+        .board-container { position: relative; display: flex; flex-direction: column; align-items: center; }
+        canvas { background: #000; border: 2px solid #222; image-rendering: pixelated; }
+        .ui-label { font-size: 14px; color: #00d4ff; font-weight: bold; margin-bottom: 10px; letter-spacing: 2px; }
+        
+        .side-box { position: absolute; background: rgba(10,10,25,0.9); border: 1px solid #333; padding: 12px; border-radius: 4px; z-index: 5; }
+        .next-box { left: 260px; top: 0; }
+        .hold-box { right: 260px; top: 0; }
+        
+        #editor-palette {
+            position: absolute; left: 360px; top: 0; display: none;
+            flex-direction: column; gap: 8px; background: rgba(255,255,255,0.05);
+            padding: 10px; border-radius: 10px; border: 1px solid #444; z-index: 20;
+        }
+        .tool-btn {
+            width: 40px; height: 40px; border-radius: 4px; border: 2px solid transparent;
+            cursor: pointer; display: flex; align-items: center; justify-content: center;
+            font-size: 20px; transition: 0.1s;
+        }
+        .tool-btn.active { border-color: #fff; box-shadow: 0 0 15px rgba(255,255,255,0.5); }
+
+        #editor-controls { position: absolute; bottom: -60px; display: none; gap: 10px; z-index: 20; }
+        #file-io { position: absolute; bottom: -120px; display: none; gap: 10px; width: 400px; justify-content: center; align-items: center; }
+        .file-btn { padding: 8px 15px; background: #111; border: 1px solid #00d4ff; color: #00d4ff; cursor: pointer; font-size: 12px; }
+        input[type="file"] { display: none; }
+
+        #overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.95); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 100; text-align: center; }
+        .btn { padding: 12px 25px; background: none; border: 2px solid #00d4ff; color: #00d4ff; cursor: pointer; font-weight: bold; }
+        .btn:hover { background: #00d4ff; color: #000; }
+        .btn.play { border-color: #00ff88; color: #00ff88; }
+        .btn.stop { border-color: #ff4444; color: #ff4444; }
+    </style>
+</head>
+<body>
+
+<div id="overlay">
+    <div style="font-size: 32px; color:#00d4ff; margin-bottom:20px;">TETRIS PRO ENGINE</div>
+    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px;">
+        <button class="btn" onclick="startMode('MARATHON')">START GAME</button>
+        <button class="btn" onclick="startMode('VSAI')">VS AI</button>
+        <button class="btn" style="grid-column:span 2; border-color:#ffd700; color:#ffd700;" onclick="startMode('EDITOR')">OPEN EDITOR</button>
+    </div>
+</div>
+
+<div class="stage">
+    <div class="board-container">
+        <div class="side-box hold-box"><div class="ui-label">HOLD</div><canvas id="p-hold" width="70" height="70"></canvas></div>
+        
+        <div id="editor-palette">
+            <div class="tool-btn active" data-color="1" style="background:#00f0f0"></div>
+            <div class="tool-btn" data-color="2" style="background:#f0f000"></div>
+            <div class="tool-btn" data-color="3" style="background:#a000f0"></div>
+            <div class="tool-btn" data-color="4" style="background:#00f000"></div>
+            <div class="tool-btn" data-color="5" style="background:#f00000"></div>
+            <div class="tool-btn" data-color="6" style="background:#0000f0"></div>
+            <div class="tool-btn" data-color="7" style="background:#f0a000"></div>
+            <div class="tool-btn" data-color="8" style="background:#555">⬛</div>
+            <div class="tool-btn" data-color="0" style="background:#000; border:1px dashed #fff">🗑️</div>
+        </div>
+
+        <div class="ui-label">PLAYER</div>
+        <canvas id="p-canvas" width="240" height="480"></canvas>
+        <div class="side-box next-box"><div class="ui-label">NEXT</div><canvas id="p-next" width="70" height="210"></canvas></div>
+
+        <div id="editor-controls">
+            <button id="edit-play-btn" class="btn play" onclick="toggleEditPlay()">TEST PLAY</button>
+            <button class="btn" onclick="location.reload()">EXIT</button>
+        </div>
+
+        <div id="file-io">
+            <button class="file-btn" onclick="saveAsFile()">DOWNLOAD (.json)</button>
+            <label class="file-btn">UPLOAD (.json)<input type="file" accept=".json" onchange="loadFromFile(this)"></label>
+        </div>
+    </div>
+</div>
+
+<script>
+const COLS = 10, ROWS = 20, SIZE = 24;
+const COLORS = [null, '#00f0f0', '#f0f000', '#a000f0', '#00f000', '#f00000', '#0000f0', '#f0a000', '#555'];
+const KICK_GEN = {"0-1":[[0,0],[-1,0],[-1,1],[0,-2],[-1,-2]],"1-0":[[0,0],[1,0],[1,-1],[0,2],[1,2]],"1-2":[[0,0],[1,0],[1,-1],[0,2],[1,2]],"2-1":[[0,0],[-1,0],[-1,1],[0,-2],[-1,-2]],"2-3":[[0,0],[1,0],[1,1],[0,-2],[1,-2]],"3-2":[[0,0],[-1,0],[-1,-1],[0,2],[-1,2]],"3-0":[[0,0],[-1,0],[-1,-1],[0,2],[-1,2]],"0-3":[[0,0],[1,0],[1,1],[0,-2],[1,-2]]};
+const KICK_I = {"0-1":[[0,0],[-2,0],[1,0],[-2,-1],[1,2]],"1-0":[[0,0],[2,0],[-1,0],[2,1],[-1,-2]],"1-2":[[0,0],[-1,0],[2,0],[-1,2],[2,-1]],"2-1":[[0,0],[1,0],[-2,0],[1,-2],[-2,1]],"2-3":[[0,0],[2,0],[-1,0],[2,1],[-1,-2]],"3-2":[[0,0],[-2,0],[1,0],[-2,-1],[1,2]],"3-0":[[0,0],[1,0],[-2,0],[1,-2],[-2,1]],"0-3":[[0,0],[-1,0],[2,0],[-1,2],[2,-1]]};
+
+class Game {
+    constructor(cId, nId, hId) {
+        this.canvas = document.getElementById(cId);
+        this.ctx = this.canvas.getContext('2d');
+        this.nextCtx = document.getElementById(nId)?.getContext('2d');
+        this.holdCtx = document.getElementById(hId)?.getContext('2d');
+        this.reset();
+    }
+    reset() {
+        this.arena = Array.from({length: ROWS}, () => Array(COLS).fill(0));
+        this.bag = []; this.next = []; this.hold = null; this.canHold = true;
+        this.piece = null; this.dropTimer = 0; this.lockTimer = 0; this.lockLimit = 1500;
+        this.lastMoveWasRotation = false;
+    }
+    getBag() { if(!this.bag.length) this.bag = [1,2,3,4,5,6,7].sort(()=>Math.random()-0.5); return this.bag.pop(); }
+    spawn() {
+        while(this.next.length < 5) this.next.push(this.getBag());
+        this.piece = { type: this.next.shift(), x: 3, y: 0, r: 0 };
+        this.piece.matrix = this.getMatrix(this.piece.type, 0);
+        this.canHold = true; this.lockTimer = 0;
+        if(this.collide()) { gameActive = false; alert("GAME OVER"); location.reload(); }
+        this.updateUI();
+    }
+    doHold() {
+        if(!this.canHold) return;
+        const currentType = this.piece.type;
+        if(this.hold === null) { this.hold = currentType; this.spawn(); } 
+        else { const nextType = this.hold; this.hold = currentType; this.piece.type = nextType; this.piece.matrix = this.getMatrix(nextType, 0); this.piece.x = 3; this.piece.y = 0; this.piece.r = 0; }
+        this.canHold = false; this.updateUI();
+    }
+    getMatrix(t, r) {
+        let m = [null,[[0,0,0,0],[1,1,1,1],[0,0,0,0],[0,0,0,0]],[[2,2],[2,2]],[[0,3,0],[3,3,3],[0,0,0]],[[0,4,4],[4,4,0],[0,0,0]],[[5,5,0],[0,5,5],[0,0,0]],[[6,0,0],[6,6,6],[0,0,0]],[[0,0,7],[7,7,7],[0,0,0]]][t];
+        let res = JSON.parse(JSON.stringify(m));
+        for(let i=0; i<(r%4); i++) res = res[0].map((_, c) => res.map(row => row[c]).reverse());
+        return res;
+    }
+    collide(p = this.piece) {
+        return p.matrix.some((row, y) => row.some((v, x) => v !== 0 && (this.arena[y+p.y] === undefined || this.arena[y+p.y][x+p.x] === undefined || this.arena[y+p.y][x+p.x] !== 0)));
+    }
+    rotate(dir) {
+        const oldR = this.piece.r; this.piece.r = (this.piece.r + dir + 4) % 4;
+        this.piece.matrix = this.getMatrix(this.piece.type, this.piece.r);
+        const kicks = (this.piece.type === 1) ? KICK_I[`${oldR}-${this.piece.r}`] : KICK_GEN[`${oldR}-${this.piece.r}`];
+        for(let [kx, ky] of (kicks || [[0,0]])) {
+            this.piece.x += kx; this.piece.y -= ky;
+            if(!this.collide()) { this.lockTimer = 0; return; }
+            this.piece.x -= kx; this.piece.y += ky;
+        }
+        this.piece.r = oldR; this.piece.matrix = this.getMatrix(this.piece.type, oldR);
+    }
+    lock() {
+        this.piece.matrix.forEach((row, y) => row.forEach((v, x) => { if(v && this.piece.y+y >= 0) this.arena[this.piece.y+y][this.piece.x+x] = v; }));
+        for(let y=ROWS-1; y>=0; y--) { if(this.arena[y].every(v => v !== 0)) { this.arena.splice(y,1); this.arena.unshift(Array(COLS).fill(0)); y++; } }
+        this.spawn();
+    }
+    updateUI() {
+        if(this.nextCtx) {
+            this.nextCtx.clearRect(0,0,70,210);
+            this.next.slice(0,3).forEach((t, i) => {
+                this.nextCtx.fillStyle = COLORS[t];
+                this.getMatrix(t, 0).forEach((row, y) => row.forEach((v, x) => { if(v) this.nextCtx.fillRect(x*10+15, i*60+y*10+15, 9, 9); }));
+            });
+        }
+        if(this.holdCtx) {
+            this.holdCtx.clearRect(0,0,70,70);
+            if(this.hold) {
+                this.holdCtx.fillStyle = COLORS[this.hold];
+                this.getMatrix(this.hold, 0).forEach((row, y) => row.forEach((v, x) => { if(v) this.holdCtx.fillRect(x*10+15, y*10+15, 9, 9); }));
+            }
+        }
+    }
+    draw(hoverPos = null) {
+        this.ctx.clearRect(0,0,240,480);
+        if (mode === 'EDITOR') {
+            this.ctx.strokeStyle = '#222';
+            for(let x=0; x<=COLS; x++) { this.ctx.beginPath(); this.ctx.moveTo(x*SIZE,0); this.ctx.lineTo(x*SIZE,480); this.ctx.stroke(); }
+            for(let y=0; y<=ROWS; y++) { this.ctx.beginPath(); this.ctx.moveTo(0,y*SIZE); this.ctx.lineTo(240,y*SIZE); this.ctx.stroke(); }
+        }
+        this.arena.forEach((row, y) => row.forEach((v, x) => { if(v) { this.ctx.fillStyle = COLORS[v]; this.ctx.fillRect(x*SIZE, y*SIZE, SIZE-1, SIZE-1); } }));
+        if(this.piece && gameActive) {
+            let gy = this.piece.y; while(!this.collide({...this.piece, y: gy+1})) gy++;
+            this.ctx.fillStyle = "rgba(255,255,255,0.15)";
+            this.piece.matrix.forEach((row, y) => row.forEach((v, x) => { if(v) this.ctx.fillRect((this.piece.x+x)*SIZE, (gy+y)*SIZE, SIZE-1, SIZE-1); }));
+            this.ctx.fillStyle = COLORS[this.piece.type];
+            this.piece.matrix.forEach((row, y) => row.forEach((v, x) => { if(v) this.ctx.fillRect((this.piece.x+x)*SIZE, (this.piece.y+y)*SIZE, SIZE-1, SIZE-1); }));
+        }
+        if(mode === 'EDITOR' && hoverPos && !gameActive) {
+            this.ctx.fillStyle = currentTool === 0 ? "rgba(255,255,255,0.5)" : COLORS[currentTool];
+            this.ctx.globalAlpha = 0.6; this.ctx.fillRect(hoverPos.x * SIZE, hoverPos.y * SIZE, SIZE, SIZE); this.ctx.globalAlpha = 1.0;
+        }
+    }
+}
+
+let pBoard, gameActive = false, mode = '', currentTool = 1, lastTime = 0, keys = {};
+let dasTimer = 0; const DAS_DELAY = 160, ARR_SPEED = 30;
+
+function startMode(m) {
+    mode = m; document.getElementById('overlay').style.display = 'none';
+    pBoard = new Game('p-canvas', 'p-next', 'p-hold');
+    if(m === 'EDITOR') {
+        document.getElementById('editor-palette').style.display = 'flex';
+        document.getElementById('editor-controls').style.display = 'flex';
+        document.getElementById('file-io').style.display = 'flex';
+        setupEditor();
+    } else { gameActive = true; pBoard.spawn(); requestAnimationFrame(loop); }
+}
+
+function setupEditor() {
+    const canvas = document.getElementById('p-canvas');
+    const btns = document.querySelectorAll('.tool-btn');
+    btns.forEach(b => b.onclick = () => { btns.forEach(x=>x.classList.remove('active')); b.classList.add('active'); currentTool = parseInt(b.dataset.color); });
+    const getPos = (e) => {
+        const rect = canvas.getBoundingClientRect();
+        const scaleX = canvas.width / rect.width, scaleY = canvas.height / rect.height;
+        const x = Math.floor(((e.clientX - rect.left) * scaleX) / SIZE);
+        const y = Math.floor(((e.clientY - rect.top) * scaleY) / SIZE);
+        return {x, y};
+    };
+    canvas.onmousedown = (e) => {
+        if(gameActive) return;
+        const paint = (ev) => {
+            const pos = getPos(ev);
+            if(pos.x>=0 && pos.x<COLS && pos.y>=0 && pos.y<ROWS) { pBoard.arena[pos.y][pos.x] = currentTool; pBoard.draw(pos); }
+        };
+        paint(e); canvas.onmousemove = paint;
+    };
+    canvas.onmousemove = (e) => { if(!gameActive) pBoard.draw(getPos(e)); };
+    window.onmouseup = () => canvas.onmousemove = null;
+}
+
+function saveAsFile() {
+    const data = JSON.stringify(pBoard.arena);
+    const blob = new Blob([data], {type: 'application/json'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href = url; a.download = 'tetris_board.json'; a.click();
+}
+
+function loadFromFile(input) {
+    const file = input.files[0]; if(!file) return;
+    const reader = new FileReader();
+    reader.onload = (e) => { try { const data = JSON.parse(e.target.result); if(data.length === ROWS) { pBoard.arena = data; pBoard.draw(); } } catch(err) {} };
+    reader.readAsText(file);
+}
+
+function toggleEditPlay() {
+    const btn = document.getElementById('edit-play-btn');
+    if(!gameActive) { gameActive = true; pBoard.spawn(); btn.innerText = "STOP TEST"; btn.className = "btn stop"; lastTime = performance.now(); requestAnimationFrame(loop); } 
+    else { gameActive = false; btn.innerText = "TEST PLAY"; btn.className = "btn play"; pBoard.piece = null; pBoard.draw(); }
+}
+
+function loop(time = 0) {
+    if(!gameActive) return;
+    const dt = time - lastTime; lastTime = time;
+
+    // DAS / ARR 横移動
+    if(keys[37] || keys[39]) {
+        dasTimer += dt;
+        if(dasTimer > DAS_DELAY) { if(dasTimer > DAS_DELAY + ARR_SPEED) { move(keys[37] ? -1 : 1); dasTimer = DAS_DELAY; } }
+    }
+
+    // 落下処理（ソフトドロップ対応）
+    const dropInterval = keys[40] ? 30 : 800; // 下キー時は30ms、通常は800ms
+    pBoard.dropTimer += dt;
+    if(pBoard.dropTimer > dropInterval) {
+        pBoard.piece.y++;
+        if(pBoard.collide()) pBoard.piece.y--;
+        else pBoard.lockTimer = 0;
+        pBoard.dropTimer = 0;
+    }
+
+    // 接着猶予
+    if(pBoard.collide({...pBoard.piece, y: pBoard.piece.y + 1})) {
+        pBoard.lockTimer += dt;
+        if(pBoard.lockTimer >= pBoard.lockLimit) pBoard.lock();
+    } else pBoard.lockTimer = 0;
+
+    pBoard.draw();
+    requestAnimationFrame(loop);
+}
+
+function move(dir) { pBoard.piece.x += dir; if(pBoard.collide()) pBoard.piece.x -= dir; else pBoard.lockTimer = 0; }
+
+window.addEventListener("keydown", e => {
+    if(!gameActive || !pBoard.piece) return;
+    if([32,37,38,39,40,67,88,90].includes(e.keyCode)) e.preventDefault();
+    if(!keys[e.keyCode]) {
+        if(e.keyCode === 37) move(-1);
+        if(e.keyCode === 39) move(1);
+        if(e.keyCode === 67) pBoard.doHold();
+        if(e.keyCode === 38) { while(!pBoard.collide()) pBoard.piece.y++; pBoard.piece.y--; pBoard.lock(); }
+        if(e.keyCode === 90) pBoard.rotate(-1);
+        if(e.keyCode === 88) pBoard.rotate(1);
+        dasTimer = 0;
+    }
+    keys[e.keyCode] = true;
+});
+window.addEventListener("keyup", e => keys[e.keyCode] = false);
+</script>
+</body>
+</html>
