@@ -2,293 +2,294 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>Tetris Pro - Ultra Smooth Edition</title>
+    <title>Tetris</title>
     <style>
-        body { 
-            background: #020205; color: #fff; font-family: 'Segoe UI', sans-serif; 
-            display: flex; align-items: center; justify-content: center; 
-            height: 100vh; margin: 0; overflow: hidden; position: fixed; width: 100%;
-            touch-action: none;
-        }
-        .stage { display: flex; gap: 150px; align-items: center; scale: 0.85; }
-        .board-container { position: relative; display: flex; flex-direction: column; align-items: center; }
-        canvas { background: #000; border: 2px solid #222; image-rendering: pixelated; }
-        .ui-label { font-size: 14px; color: #00d4ff; font-weight: bold; margin-bottom: 10px; letter-spacing: 2px; }
-        
-        .side-box { position: absolute; background: rgba(10,10,25,0.9); border: 1px solid #333; padding: 12px; border-radius: 4px; z-index: 5; }
-        .next-box { left: 260px; top: 0; }
-        .hold-box { right: 260px; top: 0; }
-        
-        #editor-palette {
-            position: absolute; left: 360px; top: 0; display: none;
-            flex-direction: column; gap: 8px; background: rgba(255,255,255,0.05);
-            padding: 10px; border-radius: 10px; border: 1px solid #444; z-index: 20;
-        }
-        .tool-btn {
-            width: 40px; height: 40px; border-radius: 4px; border: 2px solid transparent;
-            cursor: pointer; display: flex; align-items: center; justify-content: center;
-            font-size: 20px; transition: 0.1s;
-        }
-        .tool-btn.active { border-color: #fff; box-shadow: 0 0 15px rgba(255,255,255,0.5); }
-
-        #editor-controls { position: absolute; bottom: -60px; display: none; gap: 10px; z-index: 20; }
-        #file-io { position: absolute; bottom: -120px; display: none; gap: 10px; width: 400px; justify-content: center; align-items: center; }
-        .file-btn { padding: 8px 15px; background: #111; border: 1px solid #00d4ff; color: #00d4ff; cursor: pointer; font-size: 12px; }
-        input[type="file"] { display: none; }
-
-        #overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.95); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 100; text-align: center; }
-        .btn { padding: 12px 25px; background: none; border: 2px solid #00d4ff; color: #00d4ff; cursor: pointer; font-weight: bold; }
-        .btn:hover { background: #00d4ff; color: #000; }
-        .btn.play { border-color: #00ff88; color: #00ff88; }
-        .btn.stop { border-color: #ff4444; color: #ff4444; }
+        :root { --neon: #00d4ff; --gold: #ffcc00; --danger: #ff4444; --tspink: #ff00ff; --ui-blue: #00b4ff; }
+        * { box-sizing: border-box; touch-action: none; margin: 0; padding: 0; }
+        html, body { overflow: hidden; width: 100vw; height: 100vh; background: #020205; color: #fff; font-family: 'Segoe UI', sans-serif; display: flex; align-items: center; justify-content: center; }
+        .overlay { position: fixed; inset: 0; background: rgba(0,10,25,0.96); display: flex; flex-direction: column; align-items: flex-start; justify-content: center; z-index: 1000; padding-left: 10%; transition: opacity 0.6s ease, transform 0.6s ease; }
+        .overlay.fade-out { opacity: 0; transform: scale(1.2); pointer-events: none; }
+        #count-overlay { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; z-index: 2000; pointer-events: none; font-size: 120px; font-weight: 900; color: var(--ui-blue); text-shadow: 0 0 30px var(--ui-blue); font-style: italic; opacity: 0; }
+        .count-animate { animation: count-zoom 1s ease-out; }
+        @keyframes count-zoom { 0% { opacity: 0; transform: scale(2); } 20% { opacity: 1; transform: scale(1); } 80% { opacity: 1; transform: scale(0.9); } 100% { opacity: 0; transform: scale(0.5); } }
+        #main-menu h1 { color: #fff; font-size: 72px; margin-bottom: 50px; letter-spacing: 6px; text-shadow: 0 0 25px var(--ui-blue); font-weight: 900; }
+        .btn-menu { padding: 12px 30px; background: transparent; border: none; color: #444; cursor: pointer; margin: 10px 0; font-weight: 900; font-size: 32px; transition: all 0.3s ease; text-align: left; position: relative; }
+        .btn-menu.selected { color: var(--ui-blue); transform: translateX(30px); text-shadow: 0 0 20px var(--ui-blue); }
+        .btn-menu.selected::before { content: '>'; position: absolute; left: 0; color: var(--ui-blue); }
+        #pause-screen.overlay { align-items: center; padding-left: 0; }
+        .btn-pause { padding: 15px; background: rgba(0,212,255,0.05); border: 1px solid var(--neon); color: var(--neon); cursor: pointer; margin: 10px 0; font-weight: bold; width: 240px; text-align: center; border-radius: 4px; }
+        .btn-pause.selected { background: var(--neon); color: #000; box-shadow: 0 0 30px var(--neon); transform: scale(1.05); }
+        .stage { display: flex; gap: 60px; transform: scale(0.8); transition: opacity 0.8s ease; }
+        .player-group { display: flex; align-items: flex-start; gap: 15px; position: relative; }
+        .board-area { display: flex; flex-direction: column; align-items: center; position: relative; }
+        .garbage-meter { width: 12px; height: 480px; background: #111; border: 1px solid #333; position: absolute; left: -20px; display: flex; flex-direction: column-reverse; }
+        .garbage-fill { width: 100%; background: var(--danger); transition: height 0.05s; box-shadow: 0 0 10px var(--danger); }
+        canvas { background: rgba(0,0,0,0.9); border: 3px solid #333; image-rendering: pixelated; }
+        .side-panel { width: 80px; display: flex; flex-direction: column; gap: 10px; }
+        .box { background: rgba(20,20,40,0.95); border: 1px solid #444; padding: 8px; border-radius: 6px; text-align: center; }
+        .label { font-size: 11px; font-weight: bold; color: var(--neon); margin-bottom: 5px; }
+        .pc-text { position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%) scale(0); color: #fff; font-size: 28px; font-weight: 900; text-align: center; text-shadow: 0 0 10px #000; z-index: 100; pointer-events: none; font-style: italic; white-space: nowrap; }
+        .pc-active { animation: pc-pop 1.2s ease-out forwards; }
+        @keyframes pc-pop { 0% { transform: translate(-50%, -50%) scale(0); opacity: 0; } 10% { transform: translate(-50%, -50%) scale(1.2); opacity: 1; } 100% { transform: translate(-50%, -50%) scale(1.4); opacity: 0; } }
+        .editor-ctrl { position: absolute; bottom: -160px; left: 50%; transform: translateX(-50%); display: none; background: #111; padding: 15px; border-radius: 8px; border: 2px solid #444; width: 500px; flex-direction: column; gap: 10px; z-index: 100; }
+        .palette-item { width:30px; height:30px; border:2px solid #fff; cursor:pointer; border-radius: 4px; }
+        .palette-item.active { border-color: var(--gold); box-shadow: 0 0 10px var(--gold); }
     </style>
 </head>
 <body>
 
-<div id="overlay">
-    <div style="font-size: 32px; color:#00d4ff; margin-bottom:20px;">TETRIS PRO ENGINE</div>
-    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px;">
-        <button class="btn" onclick="startMode('MARATHON')">START GAME</button>
-        <button class="btn" onclick="startMode('VSAI')">VS AI</button>
-        <button class="btn" style="grid-column:span 2; border-color:#ffd700; color:#ffd700;" onclick="startMode('EDITOR')">OPEN EDITOR</button>
-    </div>
+<div id="count-overlay"></div>
+<div id="main-menu" class="overlay">
+    <h1>TETRIS</h1>
+    <div class="btn-menu selected" onclick="initiateStart('VSAI')">VS AI</div>
+    <div class="btn-menu" onclick="initiateStart('SOLO')">SOLO PLAY</div>
+    <div class="btn-menu" onclick="initiateStart('LINE40')">40 LINES MODE</div>
+    <div class="btn-menu" onclick="initiateStart('PATTERN')">DT砲作成手順</div>
+    <div class="btn-menu" onclick="initiateStart('EDITOR')">EDITOR MODE</div>
 </div>
 
-<div class="stage">
-    <div class="board-container">
-        <div class="side-box hold-box"><div class="ui-label">HOLD</div><canvas id="p-hold" width="70" height="70"></canvas></div>
-        
-        <div id="editor-palette">
-            <div class="tool-btn active" data-color="1" style="background:#00f0f0"></div>
-            <div class="tool-btn" data-color="2" style="background:#f0f000"></div>
-            <div class="tool-btn" data-color="3" style="background:#a000f0"></div>
-            <div class="tool-btn" data-color="4" style="background:#00f000"></div>
-            <div class="tool-btn" data-color="5" style="background:#f00000"></div>
-            <div class="tool-btn" data-color="6" style="background:#0000f0"></div>
-            <div class="tool-btn" data-color="7" style="background:#f0a000"></div>
-            <div class="tool-btn" data-color="8" style="background:#555">⬛</div>
-            <div class="tool-btn" data-color="0" style="background:#000; border:1px dashed #fff">🗑️</div>
-        </div>
+<div id="pause-screen" class="overlay" style="display:none;">
+    <h2 style="color:var(--gold); font-size: 40px; letter-spacing: 10px; margin-bottom: 30px;">PAUSED</h2>
+    <div class="btn-pause selected" onclick="togglePause()">RESUME</div>
+    <div class="btn-pause" onclick="restartGame()">RESTART</div>
+    <div class="btn-pause" onclick="returnToMenu()">QUIT TO MENU</div>
+</div>
 
-        <div class="ui-label">PLAYER</div>
-        <canvas id="p-canvas" width="240" height="480"></canvas>
-        <div class="side-box next-box"><div class="ui-label">NEXT</div><canvas id="p-next" width="70" height="210"></canvas></div>
-
-        <div id="editor-controls">
-            <button id="edit-play-btn" class="btn play" onclick="toggleEditPlay()">TEST PLAY</button>
-            <button class="btn" onclick="location.reload()">EXIT</button>
+<div class="stage" id="game-stage" style="opacity: 0;">
+    <div class="player-group">
+        <div id="p-pc" class="pc-text"></div>
+        <div class="garbage-meter"><div id="p-meter" class="garbage-fill" style="height: 0%;"></div></div>
+        <div class="side-panel">
+            <div class="box"><div class="label">HOLD</div><canvas id="p-hold" width="60" height="60"></canvas></div>
+            <div style="font-size:10px; color:#aaa; margin-top:10px;" id="p-stat">BTB: OFF<br>REN: 0</div>
+            <div style="font-size:10px; color:var(--gold); margin-top:5px;" id="p-timer"></div>
         </div>
-
-        <div id="file-io">
-            <button class="file-btn" onclick="saveAsFile()">DOWNLOAD (.json)</button>
-            <label class="file-btn">UPLOAD (.json)<input type="file" accept=".json" onchange="loadFromFile(this)"></label>
+        <div class="board-area">
+            <div id="p-title" style="color:var(--neon); margin-bottom:10px; font-weight:bold;">PLAYER</div>
+            <canvas id="p-canvas" width="240" height="480"></canvas>
         </div>
+        <div class="side-panel">
+            <div class="box"><div class="label">NEXT</div><canvas id="p-next" width="60" height="280"></canvas></div>
+        </div>
+        <div id="editor-ui" class="editor-ctrl">
+            <div id="palette" style="display:flex; gap:8px; justify-content:center; margin-bottom:10px;"></div>
+            <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap:8px;">
+                <button class="btn-pause" style="width:auto; padding:8px;" onclick="saveBoardFile()">SAVE</button>
+                <button class="btn-pause" style="width:auto; padding:8px;" onclick="document.getElementById('fileInput').click()">LOAD</button>
+                <button class="btn-pause" style="width:auto; padding:8px;" onclick="clearArena()">CLEAR</button>
+                <button class="btn-pause" style="width:auto; padding:8px; border-color:var(--gold); color:var(--gold);" onclick="initiateStartFromEditor()">START</button>
+            </div>
+            <input type="file" id="fileInput" style="display:none" onchange="loadBoardFile(event)">
+        </div>
+    </div>
+    <div class="player-group" id="ai-ui" style="display:none;">
+        <div id="ai-pc" class="pc-text"></div>
+        <div class="garbage-meter"><div id="ai-meter" class="garbage-fill" style="height: 0%;"></div></div>
+        <div class="side-panel"><div class="box"><div class="label">HOLD</div><canvas id="ai-hold" width="60" height="60"></canvas></div></div>
+        <div class="board-area">
+            <div style="color:var(--danger); margin-bottom:10px; font-weight:bold;">AI MASTER</div>
+            <canvas id="ai-canvas" width="240" height="480"></canvas>
+        </div>
+        <div class="side-panel"><div class="box"><div class="label">NEXT</div><canvas id="ai-next" width="60" height="280"></canvas></div></div>
     </div>
 </div>
 
 <script>
+// --- [1] プロ仕様データ (SRS, COLORS, DAS) ---
 const COLS = 10, ROWS = 20, SIZE = 24;
-const COLORS = [null, '#00f0f0', '#f0f000', '#a000f0', '#00f000', '#f00000', '#0000f0', '#f0a000', '#555'];
-const KICK_GEN = {"0-1":[[0,0],[-1,0],[-1,1],[0,-2],[-1,-2]],"1-0":[[0,0],[1,0],[1,-1],[0,2],[1,2]],"1-2":[[0,0],[1,0],[1,-1],[0,2],[1,2]],"2-1":[[0,0],[-1,0],[-1,1],[0,-2],[-1,-2]],"2-3":[[0,0],[1,0],[1,1],[0,-2],[1,-2]],"3-2":[[0,0],[-1,0],[-1,-1],[0,2],[-1,2]],"3-0":[[0,0],[-1,0],[-1,-1],[0,2],[-1,2]],"0-3":[[0,0],[1,0],[1,1],[0,-2],[1,-2]]};
-const KICK_I = {"0-1":[[0,0],[-2,0],[1,0],[-2,-1],[1,2]],"1-0":[[0,0],[2,0],[-1,0],[2,1],[-1,-2]],"1-2":[[0,0],[-1,0],[2,0],[-1,2],[2,-1]],"2-1":[[0,0],[1,0],[-2,0],[1,-2],[-2,1]],"2-3":[[0,0],[2,0],[-1,0],[2,1],[-1,-2]],"3-2":[[0,0],[-2,0],[1,0],[-2,-1],[1,2]],"3-0":[[0,0],[1,0],[-2,0],[1,-2],[-2,1]],"0-3":[[0,0],[-1,0],[2,0],[-1,2],[2,-1]]};
+// 配色修正: 1:I(水色), 6:J(青), 7:L(オレンジ)
+const COLORS = [null, '#00f0f0', '#f0f000', '#a000f0', '#00f000', '#f00000', '#0000ff', '#f0a000', '#555'];
+const DAS_DELAY = 150, DAS_INTERVAL = 30;
+const SRS_DATA = { "01": [[0,0],[-1,0],[-1,1],[0,-2],[-1,-2]], "10": [[0,0],[1,0],[1,-1],[0,2],[1,2]], "12": [[0,0],[1,0],[1,-1],[0,2],[1,2]], "21": [[0,0],[-1,0],[-1,1],[0,-2],[-1,-2]], "23": [[0,0],[1,0],[1,1],[0,-2],[1,-2]], "32": [[0,0],[-1,0],[-1,-1],[0,2],[-1,2]], "30": [[0,0],[-1,0],[-1,-1],[0,2],[-1,2]], "03": [[0,0],[1,0],[1,1],[0,-2],[1,-2]] };
+const SRS_I = { "01": [[0,0],[-2,0],[1,0],[-2,-1],[1,2]], "10": [[0,0],[2,0],[-1,0],[2,1],[-1,-2]], "12": [[0,0],[-1,0],[2,0],[-1,2],[2,-1]], "21": [[0,0],[1,0],[-2,0],[1,-2],[-2,1]], "23": [[0,0],[2,0],[-1,0],[2,1],[-1,-2]], "32": [[0,0],[-2,0],[1,0],[-2,-1],[1,2]], "30": [[0,0],[1,0],[-2,0],[1,-2],[-2,1]], "03": [[0,0],[-1,0],[2,0],[-1,2],[2,-1]] };
+
+// DT砲1巡目ガイド
+const DT_GUIDE = [
+    {t: 2, x: 0, y: 18, r: 0}, 
+    {t: 3, x: 3, y: 15, r: 0}, 
+    {t: 6, x: 7, y: 18, r: 0}, 
+    {t: 1, x: 4, y: 16, r: 1}, 
+    {t: 7, x: 3, y: 18, r: 0}, 
+    {t: 5, x: 7, y: 17, r: 0}, 
+    {t: 4, x: 3, y: 17, r: 0}  
+];
+
+// DT砲2巡目ガイド
+const DT_GUIDE2 = [
+    {t: 3, x: 1, y: 14, r: 0}, 
+    {t: 2, x: 4, y: 15, r: 0}, 
+    {t: 6, x: 8, y: 14, r: 0}, 
+    {t: 7, x: 0, y: 14, r: 0}, 
+    {t: 1, x: 0, y: 13, r: 0}, 
+    {t: 5, x: 7, y: 13, r: 0}, 
+    {t: 4, x: 3, y: 14, r: 0}  
+];
+
+let pBoard, aiBoard, gameActive = false, isPaused = false, isCounting = false, currentMode = 'SOLO';
+let menuIdx = 0, pauseMenuIdx = 0, selectedColor = 1, isMouseDown = false, animationId = null, dasTimers = {};
+let particles = [], rotatePressed = { z: false, x: false }, startTime = 0, linesCleared = 0;
+
+class Particle {
+    constructor(x, y, color) { this.x = x; this.y = y; this.vx = (Math.random()-0.5)*8; this.vy = (Math.random()-0.5)*8-2; this.life = 1.0; this.color = color; }
+    update() { this.x += this.vx; this.y += this.vy; this.vy += 0.15; this.life -= 0.025; }
+    draw(ctx) { ctx.fillStyle = this.color; ctx.globalAlpha = Math.max(0, this.life); ctx.fillRect(this.x, this.y, 3, 3); ctx.globalAlpha = 1; }
+}
 
 class Game {
-    constructor(cId, nId, hId) {
-        this.canvas = document.getElementById(cId);
-        this.ctx = this.canvas.getContext('2d');
-        this.nextCtx = document.getElementById(nId)?.getContext('2d');
-        this.holdCtx = document.getElementById(hId)?.getContext('2d');
-        this.reset();
+    constructor(cId, nId, hId, mId, prefix, isAI = false) {
+        this.canvas = document.getElementById(cId); this.ctx = this.canvas.getContext('2d');
+        this.nextCtx = document.getElementById(nId).getContext('2d');
+        this.holdCtx = document.getElementById(hId).getContext('2d');
+        this.meterEl = document.getElementById(mId); this.prefix = prefix; this.isAI = isAI; this.reset();
     }
     reset() {
         this.arena = Array.from({length: ROWS}, () => Array(COLS).fill(0));
-        this.bag = []; this.next = []; this.hold = null; this.canHold = true;
-        this.piece = null; this.dropTimer = 0; this.lockTimer = 0; this.lockLimit = 1500;
-        this.lastMoveWasRotation = false;
+        this.bag = []; this.next = []; this.hold = null; this.canHold = true; this.piece = null; this.dropTimer = 0; this.lockTimer = 0; this.garbageQueue = 0;
+        this.btb = false; this.ren = -1; this.flashEffect = 0; this.tSpin = false; this.dtIdx = 0; this.dtRound = 1; this.lockCount = 0; this.aiMoveTimer = 0;
+        if(this.prefix === 'p') linesCleared = 0; this.updateUI();
     }
-    getBag() { if(!this.bag.length) this.bag = [1,2,3,4,5,6,7].sort(()=>Math.random()-0.5); return this.bag.pop(); }
-    spawn() {
-        while(this.next.length < 5) this.next.push(this.getBag());
-        this.piece = { type: this.next.shift(), x: 3, y: 0, r: 0 };
-        this.piece.matrix = this.getMatrix(this.piece.type, 0);
-        this.canHold = true; this.lockTimer = 0;
-        if(this.collide()) { gameActive = false; alert("GAME OVER"); location.reload(); }
-        this.updateUI();
-    }
-    doHold() {
-        if(!this.canHold) return;
-        const currentType = this.piece.type;
-        if(this.hold === null) { this.hold = currentType; this.spawn(); } 
-        else { const nextType = this.hold; this.hold = currentType; this.piece.type = nextType; this.piece.matrix = this.getMatrix(nextType, 0); this.piece.x = 3; this.piece.y = 0; this.piece.r = 0; }
-        this.canHold = false; this.updateUI();
+    getBag() {
+        if(currentMode === 'PATTERN' && !this.isAI) {
+            const seq1 = [2, 3, 6, 1, 7, 5, 4];
+            const seq2 = [3, 2, 6, 7, 1, 5, 4];
+            if (this.dtRound === 1) return seq1[this.dtIdx++ % seq1.length];
+            else return seq2[this.dtIdx++ % seq2.length];
+        }
+        if(!this.bag.length) this.bag = [1,2,3,4,5,6,7].sort(()=>Math.random()-0.5); return this.bag.pop();
     }
     getMatrix(t, r) {
         let m = [null,[[0,0,0,0],[1,1,1,1],[0,0,0,0],[0,0,0,0]],[[2,2],[2,2]],[[0,3,0],[3,3,3],[0,0,0]],[[0,4,4],[4,4,0],[0,0,0]],[[5,5,0],[0,5,5],[0,0,0]],[[6,0,0],[6,6,6],[0,0,0]],[[0,0,7],[7,7,7],[0,0,0]]][t];
-        let res = JSON.parse(JSON.stringify(m));
-        for(let i=0; i<(r%4); i++) res = res[0].map((_, c) => res.map(row => row[c]).reverse());
-        return res;
+        let res = JSON.parse(JSON.stringify(m)); for(let i=0; i<(r%4); i++) res = res[0].map((_, c) => res.map(row => row[c]).reverse()); return res;
     }
-    collide(p = this.piece) {
-        return p.matrix.some((row, y) => row.some((v, x) => v !== 0 && (this.arena[y+p.y] === undefined || this.arena[y+p.y][x+p.x] === undefined || this.arena[y+p.y][x+p.x] !== 0)));
+    spawn() {
+        while(this.next.length < 6) this.next.push(this.getBag());
+        this.piece = { type: this.next.shift(), x: 3, y: 0, r: 0 }; this.piece.matrix = this.getMatrix(this.piece.type, 0); this.canHold = true; this.tSpin = false;
+        if(this.collide()){ gameActive = false; setTimeout(() => { alert(this.isAI ? "WIN" : "GAMEOVER"); returnToMenu(); }, 10); return; }
+        if(this.isAI) this.aiThink(); this.updateUI();
     }
+    collide(p = this.piece) { return p.matrix.some((row, y) => row.some((v, x) => v !== 0 && (this.arena[y+p.y] === undefined || this.arena[y+p.y][x+p.x] === undefined || this.arena[y+p.y][x+p.x] !== 0))); }
     rotate(dir) {
-        const oldR = this.piece.r; this.piece.r = (this.piece.r + dir + 4) % 4;
-        this.piece.matrix = this.getMatrix(this.piece.type, this.piece.r);
-        const kicks = (this.piece.type === 1) ? KICK_I[`${oldR}-${this.piece.r}`] : KICK_GEN[`${oldR}-${this.piece.r}`];
-        for(let [kx, ky] of (kicks || [[0,0]])) {
-            this.piece.x += kx; this.piece.y -= ky;
-            if(!this.collide()) { this.lockTimer = 0; return; }
-            this.piece.x -= kx; this.piece.y += ky;
+        const oldR = this.piece.r, newR = (oldR + dir + 4) % 4, matrix = this.getMatrix(this.piece.type, newR);
+        const tests = (this.piece.type === 1) ? SRS_I[oldR+""+newR] : SRS_DATA[oldR+""+newR];
+        if(!tests) return false;
+        for(let i = 0; i < tests.length; i++) {
+            let test = { ...this.piece, x: this.piece.x + tests[i][0], y: this.piece.y - tests[i][1], r: newR, matrix };
+            if(!this.collide(test)) { this.piece = test; return true; }
         }
-        this.piece.r = oldR; this.piece.matrix = this.getMatrix(this.piece.type, oldR);
+        return false;
     }
     lock() {
-        this.piece.matrix.forEach((row, y) => row.forEach((v, x) => { if(v && this.piece.y+y >= 0) this.arena[this.piece.y+y][this.piece.x+x] = v; }));
-        for(let y=ROWS-1; y>=0; y--) { if(this.arena[y].every(v => v !== 0)) { this.arena.splice(y,1); this.arena.unshift(Array(COLS).fill(0)); y++; } }
+        this.piece.matrix.forEach((row, y) => row.forEach((v, x) => { if(v) { this.arena[this.piece.y+y][this.piece.x+x] = v; if(!this.isAI) for(let i=0;i<4;i++) particles.push(new Particle((this.piece.x+x)*SIZE+SIZE/2,(this.piece.y+y)*SIZE+SIZE/2,COLORS[v])); } }));
+        if(currentMode === 'PATTERN' && !this.isAI) {
+            this.lockCount++;
+            if(this.lockCount === 7 && this.dtRound === 1) { this.dtRound = 2; this.dtIdx = 0; }
+        }
+        let cleared = 0; outer: for(let y=ROWS-1; y>=0; y--) { for(let x=0; x<COLS; x++) if(this.arena[y][x] === 0) continue outer; this.arena.splice(y,1); this.arena.unshift(Array(COLS).fill(0)); cleared++; y++; }
+        if(cleared > 0) {
+            if(this.prefix === 'p') linesCleared += cleared;
+            let atk = cleared === 4 ? 4 : (cleared - 1);
+            let target = this.isAI ? pBoard : aiBoard;
+            if(target && atk > 0) { target.garbageQueue += atk; target.updateUI(); }
+        } else if(this.garbageQueue > 0) this.receiveGarbage();
         this.spawn();
     }
+    receiveGarbage() { let count = Math.min(this.garbageQueue, 8), hole = Math.floor(Math.random()*COLS); for(let i=0;i<count;i++){ this.arena.shift(); this.arena.push(Array(COLS).fill(8).map((v,x)=>x===hole?0:v)); } this.garbageQueue -= count; this.updateUI(); }
     updateUI() {
-        if(this.nextCtx) {
-            this.nextCtx.clearRect(0,0,70,210);
-            this.next.slice(0,3).forEach((t, i) => {
-                this.nextCtx.fillStyle = COLORS[t];
-                this.getMatrix(t, 0).forEach((row, y) => row.forEach((v, x) => { if(v) this.nextCtx.fillRect(x*10+15, i*60+y*10+15, 9, 9); }));
-            });
+        if(this.meterEl) this.meterEl.style.height = `${(this.garbageQueue / 12) * 100}%`;
+        [this.nextCtx, this.holdCtx].forEach(c => { if(c) c.clearRect(0,0,100,300); });
+        this.next.slice(0,5).forEach((t,i) => { this.nextCtx.fillStyle = COLORS[t]; this.getMatrix(t,0).forEach((row,y)=>row.forEach((v,x)=>{ if(v) this.nextCtx.fillRect(x*7+12, i*50+y*7+15, 6, 6); })); });
+        if(this.hold) { this.holdCtx.fillStyle = COLORS[this.hold]; this.getMatrix(this.hold,0).forEach((row,y)=>row.forEach((v,x)=>{ if(v) this.holdCtx.fillRect(x*8+12, y*8+15, 7, 7); })); }
+    }
+    draw() {
+        this.ctx.clearRect(0,0,240,480);
+        if(currentMode==='PATTERN' && !this.isAI) {
+            this.ctx.globalAlpha = 0.3;
+            const currentGuide = this.dtRound === 1 ? DT_GUIDE : DT_GUIDE2;
+            currentGuide.forEach(g => { const m = this.getMatrix(g.t, g.r); this.ctx.strokeStyle = COLORS[g.t]; this.ctx.lineWidth = 2; m.forEach((row,y)=>row.forEach((v,x)=>{ if(v) this.ctx.strokeRect((g.x+x)*SIZE+2,(g.y+y)*SIZE+2,SIZE-4,SIZE-4); })); });
+            this.ctx.globalAlpha = 1;
         }
-        if(this.holdCtx) {
-            this.holdCtx.clearRect(0,0,70,70);
-            if(this.hold) {
-                this.holdCtx.fillStyle = COLORS[this.hold];
-                this.getMatrix(this.hold, 0).forEach((row, y) => row.forEach((v, x) => { if(v) this.holdCtx.fillRect(x*10+15, y*10+15, 9, 9); }));
+        this.arena.forEach((row,y)=>row.forEach((v,x)=>{ if(v){ this.ctx.fillStyle = COLORS[v]; this.ctx.fillRect(x*SIZE, y*SIZE, SIZE-1, SIZE-1); } }));
+        if(this.piece && (gameActive || isCounting)) {
+            let gy = this.piece.y; while(!this.collide({...this.piece, y: gy + 1})) gy++;
+            this.ctx.fillStyle = "rgba(255,255,255,0.2)"; this.piece.matrix.forEach((row,y)=>row.forEach((v,x)=>{ if(v) this.ctx.fillRect((this.piece.x+x)*SIZE, (gy+y)*SIZE, SIZE-1, SIZE-1); }));
+            this.ctx.fillStyle = COLORS[this.piece.type]; this.piece.matrix.forEach((row,y)=>row.forEach((v,x)=>{ if(v) this.ctx.fillRect((this.piece.x+x)*SIZE, (this.piece.y+y)*SIZE, SIZE-1, SIZE-1); }));
+        }
+        if(this.prefix==='p') { for(let i=particles.length-1;i>=0;i--){ particles[i].update(); particles[i].draw(this.ctx); if(particles[i].life<=0) particles.splice(i,1); } }
+    }
+    aiThink() {
+        let best = { x: 3, r: 0, score: -Infinity };
+        for(let r=0; r<4; r++){
+            let m = this.getMatrix(this.piece.type, r);
+            for(let x=-2; x<COLS; x++){
+                let p = { type:this.piece.type, x, y: 0, r, matrix: m }; if(this.collide(p)) continue;
+                while(!this.collide({...p, y: p.y+1})) p.y++;
+                let s = -p.y; if(s > best.score) best = { x, r, score: s };
             }
         }
-    }
-    draw(hoverPos = null) {
-        this.ctx.clearRect(0,0,240,480);
-        if (mode === 'EDITOR') {
-            this.ctx.strokeStyle = '#222';
-            for(let x=0; x<=COLS; x++) { this.ctx.beginPath(); this.ctx.moveTo(x*SIZE,0); this.ctx.lineTo(x*SIZE,480); this.ctx.stroke(); }
-            for(let y=0; y<=ROWS; y++) { this.ctx.beginPath(); this.ctx.moveTo(0,y*SIZE); this.ctx.lineTo(240,y*SIZE); this.ctx.stroke(); }
-        }
-        this.arena.forEach((row, y) => row.forEach((v, x) => { if(v) { this.ctx.fillStyle = COLORS[v]; this.ctx.fillRect(x*SIZE, y*SIZE, SIZE-1, SIZE-1); } }));
-        if(this.piece && gameActive) {
-            let gy = this.piece.y; while(!this.collide({...this.piece, y: gy+1})) gy++;
-            this.ctx.fillStyle = "rgba(255,255,255,0.15)";
-            this.piece.matrix.forEach((row, y) => row.forEach((v, x) => { if(v) this.ctx.fillRect((this.piece.x+x)*SIZE, (gy+y)*SIZE, SIZE-1, SIZE-1); }));
-            this.ctx.fillStyle = COLORS[this.piece.type];
-            this.piece.matrix.forEach((row, y) => row.forEach((v, x) => { if(v) this.ctx.fillRect((this.piece.x+x)*SIZE, (this.piece.y+y)*SIZE, SIZE-1, SIZE-1); }));
-        }
-        if(mode === 'EDITOR' && hoverPos && !gameActive) {
-            this.ctx.fillStyle = currentTool === 0 ? "rgba(255,255,255,0.5)" : COLORS[currentTool];
-            this.ctx.globalAlpha = 0.6; this.ctx.fillRect(hoverPos.x * SIZE, hoverPos.y * SIZE, SIZE, SIZE); this.ctx.globalAlpha = 1.0;
-        }
+        this.aiTarget = best;
     }
 }
 
-let pBoard, gameActive = false, mode = '', currentTool = 1, lastTime = 0, keys = {};
-let dasTimer = 0; const DAS_DELAY = 160, ARR_SPEED = 30;
+function initiateStart(mode) {
+    document.getElementById('main-menu').classList.add('fade-out');
+    setTimeout(() => { document.getElementById('game-stage').style.opacity = '1'; startMode(mode); if(mode !== 'EDITOR') runCountdown(() => { gameActive = true; startTime = Date.now(); }); }, 600);
+}
+
+function runCountdown(cb) {
+    isCounting = true; const el = document.getElementById('count-overlay'); const counts = ['3','2','1','GO!']; let i = 0;
+    const tick = () => { if(i >= 4) { el.innerText = ''; isCounting = false; cb(); return; } el.innerText = counts[i++]; el.className = ''; void el.offsetWidth; el.className = 'count-animate'; setTimeout(tick, 1000); };
+    tick();
+}
 
 function startMode(m) {
-    mode = m; document.getElementById('overlay').style.display = 'none';
-    pBoard = new Game('p-canvas', 'p-next', 'p-hold');
-    if(m === 'EDITOR') {
-        document.getElementById('editor-palette').style.display = 'flex';
-        document.getElementById('editor-controls').style.display = 'flex';
-        document.getElementById('file-io').style.display = 'flex';
-        setupEditor();
-    } else { gameActive = true; pBoard.spawn(); requestAnimationFrame(loop); }
+    currentMode = m; gameActive = false; isPaused = false;
+    document.getElementById('ai-ui').style.display = (m==='VSAI')?'flex':'none';
+    document.getElementById('editor-ui').style.display = (m==='EDITOR')?'flex':'none';
+    pBoard = new Game('p-canvas','p-next','p-hold','p-meter','p');
+    aiBoard = (m==='VSAI')?new Game('ai-canvas','ai-next','ai-hold','ai-meter','ai',true):null;
+    if(m==='EDITOR') { initEditor(); } else { pBoard.spawn(); if(aiBoard) aiBoard.spawn(); }
+    if(!animationId) loop();
 }
 
-function setupEditor() {
-    const canvas = document.getElementById('p-canvas');
-    const btns = document.querySelectorAll('.tool-btn');
-    btns.forEach(b => b.onclick = () => { btns.forEach(x=>x.classList.remove('active')); b.classList.add('active'); currentTool = parseInt(b.dataset.color); });
-    const getPos = (e) => {
-        const rect = canvas.getBoundingClientRect();
-        const scaleX = canvas.width / rect.width, scaleY = canvas.height / rect.height;
-        const x = Math.floor(((e.clientX - rect.left) * scaleX) / SIZE);
-        const y = Math.floor(((e.clientY - rect.top) * scaleY) / SIZE);
-        return {x, y};
-    };
-    canvas.onmousedown = (e) => {
-        if(gameActive) return;
-        const paint = (ev) => {
-            const pos = getPos(ev);
-            if(pos.x>=0 && pos.x<COLS && pos.y>=0 && pos.y<ROWS) { pBoard.arena[pos.y][pos.x] = currentTool; pBoard.draw(pos); }
-        };
-        paint(e); canvas.onmousemove = paint;
-    };
-    canvas.onmousemove = (e) => { if(!gameActive) pBoard.draw(getPos(e)); };
-    window.onmouseup = () => canvas.onmousemove = null;
-}
-
-function saveAsFile() {
-    const data = JSON.stringify(pBoard.arena);
-    const blob = new Blob([data], {type: 'application/json'});
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a'); a.href = url; a.download = 'tetris_board.json'; a.click();
-}
-
-function loadFromFile(input) {
-    const file = input.files[0]; if(!file) return;
-    const reader = new FileReader();
-    reader.onload = (e) => { try { const data = JSON.parse(e.target.result); if(data.length === ROWS) { pBoard.arena = data; pBoard.draw(); } } catch(err) {} };
-    reader.readAsText(file);
-}
-
-function toggleEditPlay() {
-    const btn = document.getElementById('edit-play-btn');
-    if(!gameActive) { gameActive = true; pBoard.spawn(); btn.innerText = "STOP TEST"; btn.className = "btn stop"; lastTime = performance.now(); requestAnimationFrame(loop); } 
-    else { gameActive = false; btn.innerText = "TEST PLAY"; btn.className = "btn play"; pBoard.piece = null; pBoard.draw(); }
-}
-
-function loop(time = 0) {
-    if(!gameActive) return;
-    const dt = time - lastTime; lastTime = time;
-
-    // DAS / ARR 横移動
-    if(keys[37] || keys[39]) {
-        dasTimer += dt;
-        if(dasTimer > DAS_DELAY) { if(dasTimer > DAS_DELAY + ARR_SPEED) { move(keys[37] ? -1 : 1); dasTimer = DAS_DELAY; } }
+function loop() {
+    if(gameActive && !isPaused) {
+        [pBoard, aiBoard].filter(b=>b).forEach(b => {
+            b.dropTimer += 16;
+            if(b.collide({...b.piece, y: b.piece.y+1})) { b.lockTimer += 16; if(b.lockTimer >= 800) b.lock(); }
+            else if(b.dropTimer > 800) { b.piece.y++; b.dropTimer = 0; }
+            if(b.isAI) { b.aiMoveTimer += 16; if(b.aiMoveTimer > 100) { if(b.piece.r !== b.aiTarget.r) b.rotate(1); else if(b.piece.x < b.aiTarget.x) b.piece.x++; else if(b.piece.x > b.aiTarget.x) b.piece.x--; else { while(!b.collide({...b.piece, y:b.piece.y+1})) b.piece.y++; b.lock(); } b.aiMoveTimer = 0; } }
+        });
     }
-
-    // 落下処理（ソフトドロップ対応）
-    const dropInterval = keys[40] ? 30 : 800; // 下キー時は30ms、通常は800ms
-    pBoard.dropTimer += dt;
-    if(pBoard.dropTimer > dropInterval) {
-        pBoard.piece.y++;
-        if(pBoard.collide()) pBoard.piece.y--;
-        else pBoard.lockTimer = 0;
-        pBoard.dropTimer = 0;
-    }
-
-    // 接着猶予
-    if(pBoard.collide({...pBoard.piece, y: pBoard.piece.y + 1})) {
-        pBoard.lockTimer += dt;
-        if(pBoard.lockTimer >= pBoard.lockLimit) pBoard.lock();
-    } else pBoard.lockTimer = 0;
-
-    pBoard.draw();
-    requestAnimationFrame(loop);
+    [pBoard, aiBoard].filter(b=>b).forEach(b=>b.draw()); animationId = requestAnimationFrame(loop);
 }
 
-function move(dir) { pBoard.piece.x += dir; if(pBoard.collide()) pBoard.piece.x -= dir; else pBoard.lockTimer = 0; }
+function togglePause() { isPaused = !isPaused; document.getElementById('pause-screen').style.display = isPaused?'flex':'none'; }
+function returnToMenu() { location.reload(); }
 
 window.addEventListener("keydown", e => {
-    if(!gameActive || !pBoard.piece) return;
-    if([32,37,38,39,40,67,88,90].includes(e.keyCode)) e.preventDefault();
-    if(!keys[e.keyCode]) {
-        if(e.keyCode === 37) move(-1);
-        if(e.keyCode === 39) move(1);
-        if(e.keyCode === 67) pBoard.doHold();
-        if(e.keyCode === 38) { while(!pBoard.collide()) pBoard.piece.y++; pBoard.piece.y--; pBoard.lock(); }
-        if(e.keyCode === 90) pBoard.rotate(-1);
-        if(e.keyCode === 88) pBoard.rotate(1);
-        dasTimer = 0;
+    if([32, 37, 38, 39, 40].includes(e.keyCode)) e.preventDefault();
+    if(!gameActive && !isPaused) {
+        if(e.keyCode===38) menuIdx = (menuIdx-1+5)%5; if(e.keyCode===40) menuIdx = (menuIdx+1)%5;
+        document.querySelectorAll('#main-menu .btn-menu').forEach((b,i)=>b.classList.toggle('selected',i===menuIdx));
+        if(e.keyCode===13) document.querySelectorAll('#main-menu .btn-menu')[menuIdx].click(); return;
     }
-    keys[e.keyCode] = true;
+    if(e.keyCode===81) togglePause(); if(!gameActive || isPaused) return;
+    const move = (k) => { if(k===37){ pBoard.piece.x--; if(pBoard.collide()) pBoard.piece.x++; } if(k===39){ pBoard.piece.x++; if(pBoard.collide()) pBoard.piece.x--; } if(k===40){ pBoard.piece.y++; if(pBoard.collide()) pBoard.piece.y--; } };
+    if([37, 39, 40].includes(e.keyCode) && !dasTimers[e.keyCode]) { move(e.keyCode); dasTimers[e.keyCode] = setTimeout(() => { dasTimers[e.keyCode] = setInterval(() => move(e.keyCode), DAS_INTERVAL); }, DAS_DELAY); }
+    if(e.keyCode===88) pBoard.rotate(1); if(e.keyCode===90) pBoard.rotate(-1);
+    if(e.keyCode===38) { while(!pBoard.collide({...pBoard.piece, y:pBoard.piece.y+1})) pBoard.piece.y++; pBoard.lock(); }
+    if(e.keyCode===67) { if(!pBoard.canHold) return; if(!pBoard.hold) { pBoard.hold=pBoard.piece.type; pBoard.spawn(); } else { [pBoard.piece.type, pBoard.hold] = [pBoard.hold, pBoard.piece.type]; pBoard.piece.matrix=pBoard.getMatrix(pBoard.piece.type,0); } pBoard.canHold=false; pBoard.updateUI(); }
 });
-window.addEventListener("keyup", e => keys[e.keyCode] = false);
+window.addEventListener("keyup", e => { clearInterval(dasTimers[e.keyCode]); clearTimeout(dasTimers[e.keyCode]); delete dasTimers[e.keyCode]; });
+
+function initEditor() {
+    const pal = document.getElementById('palette'); pal.innerHTML = '';
+    COLORS.forEach((c, i) => { const d = document.createElement('div'); d.className = 'palette-item' + (i===selectedColor?' active':''); d.style.background = c || '#222'; d.onclick = () => { selectedColor = i; initEditor(); }; pal.appendChild(d); });
+    const cvs = document.getElementById('p-canvas'); cvs.onmousedown = (e) => { isMouseDown = true; editAt(e); }; window.onmouseup = () => isMouseDown = false; cvs.onmousemove = (e) => { if(isMouseDown) editAt(e); };
+}
+function editAt(e) { const cvs = document.getElementById('p-canvas'); const rect = cvs.getBoundingClientRect(); const x = Math.floor((e.clientX - rect.left) / (rect.width/COLS)); const y = Math.floor((e.clientY - rect.top) / (rect.height/ROWS)); if(x>=0 && x<COLS && y>=0 && y<ROWS) { pBoard.arena[y][x] = selectedColor; pBoard.draw(); } }
+function clearArena() { pBoard.arena = Array.from({length: ROWS}, () => Array(COLS).fill(0)); pBoard.draw(); }
+function initiateStartFromEditor() { document.getElementById('editor-ui').style.display='none'; runCountdown(() => { gameActive=true; pBoard.spawn(); }); }
 </script>
 </body>
 </html>
