@@ -116,7 +116,7 @@
     </div>
 
     <div class="io-buttons">
-        <button class="io-btn" onclick="exportJSON()">💾 セーブ (.json)</button>
+        <button class="io-btn" onclick="exportJSON()">💾 名前をつけてセーブ</button>
         <button class="io-btn" onclick="document.getElementById('importFile').click()">📂 ロード</button>
         <input type="file" id="importFile" style="display:none" onchange="importJSON(event)" accept=".json">
     </div>
@@ -236,7 +236,7 @@ function updateProgressBar() {
     });
 }
 
-// セーブ機能（JSON出力）
+// 改良版セーブ機能（名前指定）
 function exportJSON() {
     const storageData = {};
     for (let i = 0; i < localStorage.length; i++) {
@@ -245,15 +245,24 @@ function exportJSON() {
             storageData[key] = localStorage.getItem(key);
         }
     }
+
+    // ファイル名の入力プロンプトを表示
+    let fileName = prompt("保存するファイル名を入力してください（例: あつ森、Art等）", "backup");
+    
+    // キャンセルされた場合は何もしない
+    if (fileName === null) return;
+    
+    // 未入力の場合はデフォルト名
+    if (fileName.trim() === "") fileName = "backup";
+    
     const blob = new Blob([JSON.stringify(storageData, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `atsumori_art_backup_${new Date().toISOString().slice(0,10)}.json`;
+    a.download = `${fileName}.json`;
     a.click();
 }
 
-// ロード機能（JSON入力）
 function importJSON(event) {
     const file = event.target.files[0];
     if (!file) return;
@@ -264,7 +273,7 @@ function importJSON(event) {
             Object.keys(importedData).forEach(key => {
                 localStorage.setItem(key, importedData[key]);
             });
-            alert('ロードが完了しました！ページを更新します。');
+            alert('ロードが完了しました！');
             location.reload();
         } catch (err) {
             alert('有効なJSONファイルではありません。');
