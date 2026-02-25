@@ -34,18 +34,25 @@
             overflow: hidden; touch-action: none;
         }
 
-        /* 右からふわっとアニメーション */
+        /* 横画面時のCATEGORYラベル（初期は非表示） */
+        .category-label {
+            display: none;
+            padding: 20px 18px 10px;
+            font-size: 0.75rem;
+            font-weight: bold;
+            color: var(--main-color);
+            letter-spacing: 0.1em;
+            opacity: 0.8;
+        }
+
+        /* アニメーション */
         .reveal {
             opacity: 0;
             transform: translateX(25px);
             transition: opacity 0.5s ease, transform 0.5s ease;
         }
-        .reveal.active {
-            opacity: 1;
-            transform: translateX(0);
-        }
+        .reveal.active { opacity: 1; transform: translateX(0); }
 
-        /* ナビゲーション */
         nav { grid-area: nav; background: var(--sidebar-bg); border-bottom: 2px solid var(--main-color); z-index: 100; }
         .tabs-row { display: flex; width: 100%; }
         .tab { flex: 1; padding: 18px; border: none; background: none; font-weight: bold; cursor: pointer; color: var(--text-color); border-bottom: 4px solid transparent; font-size: 1rem; }
@@ -65,7 +72,6 @@
         .item { background: var(--card-bg); margin-bottom: 15px; padding: 20px; border-radius: 12px; border-left: 6px solid var(--main-color); box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
         .hint { margin-top: 10px; font-size: 0.9em; background: var(--hint-bg); color: var(--hint-text); padding: 12px; border-radius: 8px; line-height: 1.5; }
 
-        /* フッター・ボタン */
         footer { grid-area: footer; background: var(--sidebar-bg); padding: 12px; display: flex; gap: 10px; border-top: 1px solid rgba(0,0,0,0.1); }
         .btn { flex: 1; height: 48px; border: none; border-radius: 8px; background: var(--main-color); color: white; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; }
         .btn.secondary { background: #666; }
@@ -73,16 +79,13 @@
         @media (min-width: 1024px) {
             body { grid-template-areas: "nav main"; grid-template-columns: 220px 1fr; grid-template-rows: 1fr; }
             nav { border-bottom: none; border-right: 3px solid var(--main-color); height: 100vh; }
+            .category-label { display: block; } /* 横画面で表示 */
             .tabs-row { flex-direction: column; }
             footer { position: fixed; top: 20px; right: 20px; flex-direction: column; background: transparent; border: none; width: auto; padding: 0; }
             .btn { 
-                width: 60px; height: 60px;
-                min-width: 60px; min-height: 60px; /* 潰れ防止 */
-                border-radius: 50%; 
-                box-shadow: 0 4px 15px rgba(0,0,0,0.2); 
-                font-size: 1.6rem;
-                flex: none;
-                flex-shrink: 0; /* プレス防止 */
+                width: 60px; height: 60px; min-width: 60px; min-height: 60px;
+                border-radius: 50%; box-shadow: 0 4px 15px rgba(0,0,0,0.2); 
+                font-size: 1.6rem; flex: none; flex-shrink: 0;
             }
             .btn span { display: none; }
         }
@@ -94,6 +97,7 @@
 <body>
 
 <nav>
+    <div class="category-label">CATEGORY</div>
     <div class="tabs-row">
         <button class="tab active" id="btn-paintings" onclick="showTab('paintings')">🖼️ 名画</button>
         <button class="tab" id="btn-statues" onclick="showTab('statues')">🗿 彫刻</button>
@@ -167,7 +171,7 @@ const data = {
         {name: "たくましいちょうこく", hint: "右手に腕時計をしているのが偽物"},
         {name: "てがかりのちょうこく", hint: "色が青いのが偽物"},
         {name: "とてつもないちょうこく", hint: "取っ手がないのが偽物"},
-        {name: "naじみのあるちょうこく", hint: "本物のみ"},
+        {name: "なじみのあるちょうこく", hint: "本物のみ"},
         {name: "ぼんやりしたちょうこく", hint: "本物のみ"},
         {name: "りりしいちょうこく", hint: "右脇に本を抱えているのが偽物"}
     ]
@@ -200,15 +204,11 @@ const observer = new IntersectionObserver((entries) => {
 
 function showTab(tabName) {
     const targetBtn = document.getElementById(tabName === 'paintings' ? 'btn-paintings' : 'btn-statues');
-    
-    // 【重要】もしすでに active なら何もしない（文が消えるのを防ぐ）
     if (targetBtn.classList.contains('active')) return;
 
-    // ボタンのactive切り替え
     document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
     targetBtn.classList.add('active');
     
-    // コンテンツの切り替え
     document.querySelectorAll('.content').forEach(c => {
         c.classList.remove('active');
         c.querySelectorAll('.reveal').forEach(el => el.classList.remove('active'));
@@ -218,7 +218,6 @@ function showTab(tabName) {
     targetContent.classList.add('active');
     document.getElementById('main-scroll').scrollTop = 0;
     
-    // アニメーション再開
     setTimeout(() => {
         targetContent.querySelectorAll('.reveal').forEach(el => observer.observe(el));
     }, 50);
@@ -242,14 +241,21 @@ function updateProgressBar() {
     });
 }
 
+// ファイル名を指定して保存
 function exportJSON() {
+    const fileName = prompt("保存する名前を入力してください:", "あつ森美術品チェック");
+    if (fileName === null) return; // キャンセルされた場合
+
     const storageData = {};
     for (let i = 0; i < localStorage.length; i++) {
         const key = localStorage.key(i);
         if (key && key.startsWith('check-')) storageData[key] = true;
     }
     const blob = new Blob([JSON.stringify(storageData)], { type: 'application/json' });
-    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `art_check.json`; a.click();
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `${fileName || 'art_check'}.json`;
+    a.click();
 }
 
 function importJSON(event) {
