@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>あつ森 美術品チェックリスト</title>
     <style>
         :root {
@@ -32,17 +32,18 @@
             display: flex;
             transition: background-color 0.3s;
             overflow-x: hidden;
+            width: 100%;
         }
 
-        /* サイドバー */
+        /* --- サイドバー（PC版） --- */
         .sidebar {
             position: fixed;
             left: 0; top: 0;
-            width: 170px; height: 100vh;
+            width: 180px; height: 100vh;
             background: var(--sidebar-bg);
             border-right: 3px solid var(--main-color);
             display: flex; flex-direction: column;
-            padding-top: 20px; z-index: 100;
+            z-index: 100;
         }
 
         .tab {
@@ -57,67 +58,105 @@
         .progress-fill { height: 100%; background: var(--main-color); width: 0%; transition: width 0.3s; }
 
         .io-buttons { padding: 10px; display: flex; flex-direction: column; gap: 5px; margin-top: auto; }
-        .io-btn { padding: 8px; font-size: 0.75em; cursor: pointer; border: none; border-radius: 4px; background: #888; color: white; }
+        .io-btn { padding: 10px; font-size: 0.8em; cursor: pointer; border: none; border-radius: 4px; background: #888; color: white; }
+        
         .mode-toggle {
-            padding: 20px;
+            padding: 15px;
             background: var(--main-color); color: white;
             border: none; cursor: pointer; font-weight: bold;
         }
 
-        /* メインコンテンツ */
-        .main-container { margin-left: 170px; padding: 30px; width: 100%; max-width: 800px; }
-        h1 { color: var(--main-color); border-bottom: 2px solid var(--main-color); padding-bottom: 10px; }
+        /* --- メインコンテンツ --- */
+        .main-container { 
+            margin-left: 180px; 
+            padding: 20px; 
+            width: calc(100% - 180px); 
+            box-sizing: border-box;
+        }
+        h1 { color: var(--main-color); border-bottom: 2px solid var(--main-color); padding-bottom: 10px; font-size: 1.4rem; }
 
-        .content { display: none; }
+        .content { display: none; width: 100%; }
         .content.active { display: block; }
 
-        /* アニメーション */
+        /* アニメーション用カード */
         .item {
             background: var(--card-bg);
             margin-bottom: 15px;
             padding: 15px;
             border-radius: 10px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
             border-left: 5px solid var(--main-color);
             opacity: 0;
-            transform: translateX(100px);
-            transition: opacity 0.5s ease-out, transform 0.5s ease-out;
+            transform: translateX(50px);
+            transition: opacity 0.4s ease-out, transform 0.4s ease-out;
             pointer-events: none;
+            box-sizing: border-box;
+            width: 100%;
         }
 
         .item.reveal { opacity: 1; transform: translateX(0); pointer-events: auto; }
         .item-main { display: flex; align-items: center; }
-        input[type="checkbox"] { transform: scale(1.5); margin-right: 15px; cursor: pointer; accent-color: var(--main-color); }
-        label { cursor: pointer; font-weight: bold; }
+        input[type="checkbox"] { transform: scale(1.6); margin-right: 15px; cursor: pointer; accent-color: var(--main-color); }
+        label { cursor: pointer; font-weight: bold; flex: 1; }
         .hint { margin-left: 35px; margin-top: 8px; font-size: 0.85em; background: var(--hint-bg); padding: 10px; border-radius: 4px; line-height: 1.5; }
-        .gw-link { display: inline-block; margin-top: 5px; color: var(--link-color); text-decoration: none; font-size: 0.9em; border-bottom: 1px solid var(--link-color); }
+        .gw-link { display: inline-block; margin-top: 8px; color: var(--link-color); text-decoration: none; font-size: 0.9em; font-weight: bold; }
 
-        @media (max-width: 600px) {
+        /* --- モバイル最適化（レスポンシブ） --- */
+        @media (max-width: 768px) {
             body { flex-direction: column; }
-            .sidebar { position: sticky; width: 100%; height: auto; flex-direction: row; border-right: none; flex-wrap: wrap; }
-            .main-container { margin-left: 0; padding: 15px; }
-            .io-buttons { flex-direction: row; width: 100%; }
+            
+            .sidebar {
+                position: relative;
+                width: 100%;
+                height: auto;
+                border-right: none;
+                border-bottom: 3px solid var(--main-color);
+            }
+
+            .tab { flex: 1; text-align: center; padding: 15px 5px; border-bottom: none; font-size: 0.9em; }
+            .tabs-row { display: flex; width: 100%; border-bottom: 1px solid #44444433; }
+            
+            .progress-row { display: flex; width: 100%; background: rgba(0,0,0,0.02); }
+            .progress-container { flex: 1; border-right: 1px solid #44444422; padding: 8px; }
+
+            .io-buttons { flex-direction: row; margin-top: 0; padding: 10px; }
+            .io-btn { flex: 1; text-align: center; padding: 12px 5px; }
+
+            .main-container {
+                margin-left: 0;
+                width: 100%;
+                padding: 15px;
+            }
+            
+            h1 { font-size: 1.2rem; text-align: center; }
+            
+            .item { transform: translateX(30px); } /* モバイルは少し控えめにスライド */
+            .hint { margin-left: 0; } /* モバイルではヒントのインデントをなくして幅を確保 */
         }
     </style>
 </head>
 <body>
 
 <nav class="sidebar">
-    <button class="tab active" onclick="showTab(event, 'paintings')">🖼️ 名画</button>
-    <div class="progress-container">
-        名画進捗: <span id="prog-text-paintings">0%</span>
-        <div class="progress-bar-bg"><div id="prog-fill-paintings" class="progress-fill"></div></div>
+    <div class="tabs-row">
+        <button class="tab active" onclick="showTab(event, 'paintings')">🖼️ 名画</button>
+        <button class="tab" onclick="showTab(event, 'statues')">🗿 彫刻</button>
     </div>
     
-    <button class="tab" onclick="showTab(event, 'statues')">🗿 彫刻</button>
-    <div class="progress-container">
-        彫刻進捗: <span id="prog-text-statues">0%</span>
-        <div class="progress-bar-bg"><div id="prog-fill-statues" class="progress-fill"></div></div>
+    <div class="progress-row">
+        <div class="progress-container">
+            名画: <span id="prog-text-paintings">0%</span>
+            <div class="progress-bar-bg"><div id="prog-fill-paintings" class="progress-fill"></div></div>
+        </div>
+        <div class="progress-container">
+            彫刻: <span id="prog-text-statues">0%</span>
+            <div class="progress-bar-bg"><div id="prog-fill-statues" class="progress-fill"></div></div>
+        </div>
     </div>
 
     <div class="io-buttons">
-        <button class="io-btn" onclick="exportJSON()">💾 名前をつけてセーブ</button>
-        <button class="io-btn" onclick="document.getElementById('importFile').click()">📂 ロード</button>
+        <button class="io-btn" onclick="exportJSON()">💾 保存</button>
+        <button class="io-btn" onclick="document.getElementById('importFile').click()">📂 復元</button>
         <input type="file" id="importFile" style="display:none" onchange="importJSON(event)" accept=".json">
     </div>
     <button class="mode-toggle" onclick="toggleDarkMode()">🌓 背景切替</button>
@@ -140,11 +179,11 @@ const data = {
         {name: "いいめいが", hint: "本物のみ"},
         {name: "いきなめいが", hint: "本物のみ"},
         {name: "いさましいめいが", hint: "前髪がぱっつん（直線）なのが偽物"},
-        {name: "いなせなめいが", hint: "眉が上がっているのが偽物"},
+        {name: "いなせなめいが", hint: "眉がハの字で口がへの字が本物。眉が上がっていると偽物"},
         {name: "おごそかなめいが", hint: "奥の扉の男性がカーテンを触っていないのが偽物"},
         {name: "おだやかなめいが", hint: "本物のみ"},
         {name: "おちついためいが", hint: "牛乳がドバドバ出ているのが偽物"},
-        {name: "おもしろいめいが", hint: "胸に花（アーティチョーク）がないのが偽物"},
+        {name: "おもしろいめいが", hint: "胸に野菜がないのが偽物"},
         {name: "かちのあるめいが", hint: "本物のみ"},
         {name: "きれいなめいが", hint: "右上に木（森）がないのが偽物"},
         {name: "しずみゆくめいが", hint: "本物のみ"},
@@ -152,7 +191,7 @@ const data = {
         {name: "すごいめいが", hint: "中央の男性が帽子を被っていないのが偽物"},
         {name: "すてきなめいが", hint: "耳飾りが星型、または目を閉じているのが偽物"},
         {name: "すばらしいめいが", hint: "本物のみ"},
-        {name: "たおやかなめいが", hint: "抱いている動物（白貂）がグレーなのが偽物"},
+        {name: "たおやかなめいが", hint: "抱いている白貂がグレーなのが偽物"},
         {name: "たぐいまれなるめいが", hint: "本物のみ"},
         {name: "ちからづよいめいが", hint: "本物のみ"},
         {name: "ちみつなめいが", hint: "花が紫、または印がないのが偽物"},
@@ -165,7 +204,7 @@ const data = {
         {name: "みずみずしいめいが", hint: "右上にシミがあるのが偽物"},
         {name: "むじつなめいが", hint: "本物のみ"},
         {name: "めいたるめいが", hint: "本物のみ"},
-        {name: "ゆうめいなめいが", hint: "まゆげがある（見える）のが偽物"},
+        {name: "ゆうめいなめいが", hint: "まゆげがある（はっきり見える）のが偽物"},
         {name: "よくみるめいが", hint: "本物のみ"}
     ],
     statues: [
@@ -178,7 +217,7 @@ const data = {
         {name: "しんぴてきなちょうこく", hint: "右耳にイヤリングがあるのが偽物"},
         {name: "たくましいちょうこく", hint: "右手に腕時計をしているのが偽物"},
         {name: "てがかりのちょうこく", hint: "色が青いのが偽物"},
-        {name: "とてつもないちょうこく", hint: "取っ手がないのが偽物"},
+        {name: "とてつもないちょうこく", hint: "フタの取っ手がないのが偽物"},
         {name: "なじみのあるちょうこく", hint: "本物のみ"},
         {name: "ぼんやりしたちょうこく", hint: "本物のみ"},
         {name: "りりしいちょうこく", hint: "右脇に本を抱えているのが偽物"}
@@ -196,12 +235,12 @@ function createList(type, listId) {
         
         div.innerHTML = `
             <div class="item-main">
-                <input type="checkbox" id="${id}" class="check-box" data-cat="${type}" ${checked} onclick="updateStatus('${id}')">
+                <input type="checkbox" id="${id}" class="check-box" ${checked} onclick="updateStatus('${id}')">
                 <label for="${id}">${item.name}</label>
             </div>
             <div class="hint">
                 ${item.hint}<br>
-                <a href="${link}" target="_blank" class="gw-link">➡ GameWithで見分け方画像を見る</a>
+                <a href="${link}" target="_blank" class="gw-link">📸 見分け方画像 (GameWith)</a>
             </div>
         `;
         container.appendChild(div);
@@ -231,30 +270,19 @@ function updateProgressBar() {
         const total = data[cat].length;
         const checked = data[cat].filter(item => localStorage.getItem(`check-${item.name}`) === 'true').length;
         const percent = Math.round((checked / total) * 100);
-        document.getElementById(`prog-text-${cat}`).innerText = `${percent}% (${checked}/${total})`;
+        document.getElementById(`prog-text-${cat}`).innerText = `${percent}%`;
         document.getElementById(`prog-fill-${cat}`).style.width = `${percent}%`;
     });
 }
 
-// 改良版セーブ機能（名前指定）
 function exportJSON() {
     const storageData = {};
     for (let i = 0; i < localStorage.length; i++) {
         const key = localStorage.key(i);
-        if (key.startsWith('check-')) {
-            storageData[key] = localStorage.getItem(key);
-        }
+        if (key.startsWith('check-')) storageData[key] = localStorage.getItem(key);
     }
-
-    // ファイル名の入力プロンプトを表示
-    let fileName = prompt("保存するファイル名を入力してください（例: あつ森、Art等）", "backup");
-    
-    // キャンセルされた場合は何もしない
-    if (fileName === null) return;
-    
-    // 未入力の場合はデフォルト名
-    if (fileName.trim() === "") fileName = "backup";
-    
+    let fileName = prompt("保存する名前を入力してください", "backup");
+    if (!fileName) return;
     const blob = new Blob([JSON.stringify(storageData, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -270,14 +298,10 @@ function importJSON(event) {
     reader.onload = function(e) {
         try {
             const importedData = JSON.parse(e.target.result);
-            Object.keys(importedData).forEach(key => {
-                localStorage.setItem(key, importedData[key]);
-            });
-            alert('ロードが完了しました！');
+            Object.keys(importedData).forEach(key => localStorage.setItem(key, importedData[key]));
+            alert('復元しました');
             location.reload();
-        } catch (err) {
-            alert('有効なJSONファイルではありません。');
-        }
+        } catch (err) { alert('エラー'); }
     };
     reader.readAsText(file);
 }
@@ -289,11 +313,10 @@ function toggleDarkMode() {
 
 function handleScroll() {
     const items = document.querySelectorAll('.content.active .item');
-    const triggerBottom = window.innerHeight * 0.9;
-    const triggerTop = 0;
+    const triggerBottom = window.innerHeight * 0.95;
     items.forEach(item => {
         const rect = item.getBoundingClientRect();
-        if (rect.top < triggerBottom && rect.bottom > triggerTop) {
+        if (rect.top < triggerBottom && rect.bottom > 0) {
             item.classList.add('reveal');
         } else {
             item.classList.remove('reveal');
@@ -304,10 +327,7 @@ function handleScroll() {
 createList('paintings', 'paintings');
 createList('statues', 'statues');
 updateProgressBar();
-
-if (localStorage.getItem('darkMode') === 'true') {
-    document.body.classList.add('dark-mode');
-}
+if (localStorage.getItem('darkMode') === 'true') document.body.classList.add('dark-mode');
 window.addEventListener('scroll', handleScroll);
 setTimeout(handleScroll, 100);
 </script>
