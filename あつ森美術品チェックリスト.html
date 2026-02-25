@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>あつ森 美術品チェックリスト</title>
+    <style>
+        :root {
+            --main-color: #5fb48b;
+            --bg-color: #fdfaf0;
+            --card-bg: #ffffff;
+            --text-color: #4a4a4a;
+            --hint-bg: #fff9e6;
+            --sidebar-bg: #ffffff;
+            --link-color: #007bff;
+        }
+
+        body.dark-mode {
+            --bg-color: #1a1a1a;
+            --card-bg: #2d2d2d;
+            --text-color: #e0e0e0;
+            --hint-bg: #3d3a30;
+            --sidebar-bg: #252525;
+            --link-color: #66b2ff;
+        }
+
+        body {
+            font-family: sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            display: flex;
+            transition: background-color 0.3s;
+            overflow-x: hidden;
+        }
+
+        /* サイドバー */
+        .sidebar {
+            position: fixed;
+            left: 0; top: 0;
+            width: 170px; height: 100vh;
+            background: var(--sidebar-bg);
+            border-right: 3px solid var(--main-color);
+            display: flex; flex-direction: column;
+            padding-top: 20px; z-index: 100;
+        }
+
+        .tab {
+            padding: 20px 15px; border: none; background: none;
+            font-weight: bold; cursor: pointer; text-align: left;
+            color: var(--text-color); border-bottom: 1px solid #44444433;
+        }
+        .tab.active { background: var(--main-color); color: white; }
+
+        .mode-toggle {
+            margin-top: auto; padding: 20px;
+            background: var(--main-color); color: white;
+            border: none; cursor: pointer; font-weight: bold;
+        }
+
+        /* メインコンテンツ */
+        .main-container { margin-left: 170px; padding: 30px; width: 100%; max-width: 800px; }
+        h1 { color: var(--main-color); border-bottom: 2px solid var(--main-color); padding-bottom: 10px; }
+
+        .content { display: none; }
+        .content.active { display: block; }
+
+        /* アニメーション */
+        .item {
+            background: var(--card-bg);
+            margin-bottom: 15px;
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            border-left: 5px solid var(--main-color);
+            opacity: 0;
+            transform: translateX(100px);
+            transition: opacity 0.5s ease-out, transform 0.5s ease-out;
+            pointer-events: none;
+        }
+
+        .item.reveal {
+            opacity: 1;
+            transform: translateX(0);
+            pointer-events: auto;
+        }
+
+        .item-main { display: flex; align-items: center; }
+        input[type="checkbox"] { transform: scale(1.5); margin-right: 15px; cursor: pointer; accent-color: var(--main-color); }
+        label { cursor: pointer; font-weight: bold; }
+        
+        .hint { margin-left: 35px; margin-top: 8px; font-size: 0.85em; background: var(--hint-bg); padding: 10px; border-radius: 4px; line-height: 1.5; }
+        
+        .gw-link {
+            display: inline-block;
+            margin-top: 5px;
+            color: var(--link-color);
+            text-decoration: none;
+            font-size: 0.9em;
+            border-bottom: 1px solid var(--link-color);
+        }
+        .gw-link:hover { opacity: 0.7; }
+
+        @media (max-width: 600px) {
+            body { flex-direction: column; }
+            .sidebar { position: sticky; width: 100%; height: auto; flex-direction: row; border-right: none; }
+            .main-container { margin-left: 0; padding: 15px; }
+        }
+    </style>
+</head>
+<body>
+
+<nav class="sidebar">
+    <button class="tab active" onclick="showTab(event, 'paintings')">🖼️ 名画</button>
+    <button class="tab" onclick="showTab(event, 'statues')">🗿 彫刻</button>
+    <button class="mode-toggle" onclick="toggleDarkMode()">🌓 背景切替</button>
+</nav>
+
+<main class="main-container">
+    <h1>博物館 寄贈チェック</h1>
+    <div id="paintings" class="content active"></div>
+    <div id="statues" class="content"></div>
+</main>
+
+<script>
+const BASE_URL = "https://gamewith.jp/atsumori/article/show/198878";
+const data = {
+    paintings: [
+        {name: "アカデミックなめいが", hint: "右上にコーヒーカップの跡があるのが偽物"},
+        {name: "あらぶるめいがのひだり", hint: "雷神の肌が白いのが偽物（本物は緑）"},
+        {name: "あらぶるめいがのみぎ", hint: "風神の肌が緑なのが偽物（本物は白）"},
+        {name: "いいかんじのめいが", hint: "本物のみ"},
+        {name: "いいめいが", hint: "本物のみ"},
+        {name: "いきなめいが", hint: "本物のみ"},
+        {name: "いさましいめいが", hint: "前髪がぱっつん（直線）なのが偽物"},
+        {name: "いなせなめいが", hint: "眉が上がっているのが偽物"},
+        {name: "おごそかなめいが", hint: "奥の扉の男性がカーテンを触っていないのが偽物"},
+        {name: "おだやかなめいが", hint: "本物のみ"},
+        {name: "おちついためいが", hint: "牛乳がドバドバ出ているのが偽物"},
+        {name: "おもしろいめいが", hint: "胸に花（アーティチョーク）がないのが偽物"},
+        {name: "かちのあるめいが", hint: "本物のみ"},
+        {name: "きれいなめいが", hint: "右上に木（森）がないのが偽物"},
+        {name: "しずみゆくめいが", hint: "本物のみ"},
+        {name: "しなやかなめいが", hint: "左向き、または巨大なのが偽物"},
+        {name: "すごいめいが", hint: "中央の男性が帽子を被っていないのが偽物"},
+        {name: "すてきなめいが", hint: "耳飾りが星型、または目を閉じているのが偽物"},
+        {name: "すばらしいめいが", hint: "本物のみ"},
+        {name: "たおやかなめいが", hint: "抱いている動物（白貂）がグレーなのが偽物"},
+        {name: "たぐいまれなるめいが", hint: "本物のみ"},
+        {name: "ちからづよいめいが", hint: "本物のみ"},
+        {name: "ちみつなめいが", hint: "花が紫、または印がないのが偽物"},
+        {name: "なぞめいためいが", hint: "本物のみ"},
+        {name: "にぎやかなめいが", hint: "本物のみ"},
+        {name: "はなやかなめいが", hint: "本物のみ"},
+        {name: "ひかりのめいが", hint: "本物のみ"},
+        {name: "またたくめいが", hint: "本物のみ"},
+        {name: "みごとなめいが", hint: "左側に狩人たちがいないのが偽物"},
+        {name: "みずみずしいめいが", hint: "右上にシミがあるのが偽物"},
+        {name: "むじつなめいが", hint: "本物のみ"},
+        {name: "めいたるめいが", hint: "本物のみ"},
+        {name: "ゆうめいなめいが", hint: "まゆげがある（見える）のが偽物"},
+        {name: "よくみるめいが", hint: "本物のみ"}
+    ],
+    statues: [
+        {name: "いしづくりのちょうこく", hint: "ニヤリと笑っているのが偽物"},
+        {name: "いにしえのちょうこく", hint: "耳にアンテナがあるのが偽物"},
+        {name: "うつくしいちょうこく", hint: "首にネックレスをしているのが偽物"},
+        {name: "おおいなるちょうこく", hint: "本物のみ"},
+        {name: "かていなちょうこく", hint: "器にフタがあるのが偽物"},
+        {name: "こうごうしいちょうこく", hint: "左足が前なのが偽物（本物は右）"},
+        {name: "しんぴてきなちょうこく", hint: "右耳にイヤリングがあるのが偽物"},
+        {name: "たくましいちょうこく", hint: "右手に腕時計をしているのが偽物"},
+        {name: "てがかりのちょうこく", hint: "色が青いのが偽物"},
+        {name: "とてつもないちょうこく", hint: "取っ手がないのが偽物"},
+        {name: "なじみのあるちょうこく", hint: "本物のみ"},
+        {name: "ぼんやりしたちょうこく", hint: "本物のみ"},
+        {name: "りりしいちょうこく", hint: "右脇に本を抱えているのが偽物"}
+    ]
+};
+
+function createList(type, listId) {
+    const container = document.getElementById(listId);
+    data[type].forEach(item => {
+        const div = document.createElement('div');
+        div.className = 'item';
+        const id = `check-${item.name}`;
+        const checked = localStorage.getItem(id) === 'true' ? 'checked' : '';
+        // 各アイテム名をエンコードしてURLを作成
+        const link = `${BASE_URL}#:~:text=${encodeURIComponent(item.name)}`;
+        
+        div.innerHTML = `
+            <div class="item-main">
+                <input type="checkbox" id="${id}" ${checked} onclick="save('${id}')">
+                <label for="${id}">${item.name}</label>
+            </div>
+            <div class="hint">
+                ${item.hint}<br>
+                <a href="${link}" target="_blank" class="gw-link">➡ GameWithで見分け方画像を見る</a>
+            </div>
+        `;
+        container.appendChild(div);
+    });
+}
+
+function showTab(evt, tabName) {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    evt.currentTarget.classList.add('active');
+    document.querySelectorAll('.content').forEach(c => {
+        c.classList.remove('active');
+        c.querySelectorAll('.item').forEach(item => item.classList.remove('reveal'));
+    });
+    document.getElementById(tabName).classList.add('active');
+    window.scrollTo(0, 0);
+    setTimeout(handleScroll, 50);
+}
+
+function save(id) {
+    localStorage.setItem(id, document.getElementById(id).checked);
+}
+
+function toggleDarkMode() {
+    document.body.classList.toggle('dark-mode');
+    localStorage.setItem('darkMode', document.body.classList.contains('dark-mode'));
+}
+
+function handleScroll() {
+    const items = document.querySelectorAll('.content.active .item');
+    const triggerBottom = window.innerHeight * 0.9;
+    const triggerTop = 0;
+    items.forEach(item => {
+        const rect = item.getBoundingClientRect();
+        if (rect.top < triggerBottom && rect.bottom > triggerTop) {
+            item.classList.add('reveal');
+        } else {
+            item.classList.remove('reveal');
+        }
+    });
+}
+
+createList('paintings', 'paintings');
+createList('statues', 'statues');
+
+if (localStorage.getItem('darkMode') === 'true') {
+    document.body.classList.add('dark-mode');
+}
+window.addEventListener('scroll', handleScroll);
+setTimeout(handleScroll, 100);
+</script>
+
+</body>
+</html>
