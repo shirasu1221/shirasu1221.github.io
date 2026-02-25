@@ -19,12 +19,18 @@
     function go(){
       const v = document.getElementById("pw").value.trim();
 
-      if(v === "ぷにぷに"){
+      if(v === "脱獄ごっこ"){
         location.href =
         "itms-services://?action=download-manifest&url=https://shirasu1221.github.io/install.plist";
         return;
       }
-
+      
+      if(v === "AmongUs"){
+        location.href =
+        "itms-services://?action=download-manifest&url=https://shirasu1221.github.io/installAmongUs.plist";
+        return;
+      }
+      
       if(v === "ファンパレ"){
         location.href =
         "itms-services://?action=download-manifest&url=https://shirasu1221.github.io/installFanPare.plist";
