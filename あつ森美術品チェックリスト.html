@@ -13,7 +13,7 @@
             --hint-bg: #fff9e6;
             --hint-text: #555555;
             --sidebar-bg: #ffffff;
-            --scrollbar-width: 24px; /* バーの通り道を確保 */
+            --scrollbar-width: 24px;
             --img-size: 100%;
         }
         body.dark-mode {
@@ -34,7 +34,6 @@
             touch-action: none;
         }
 
-        /* 標準スクロールバーを徹底排除 */
         main::-webkit-scrollbar { display: none; }
         main { -ms-overflow-style: none; scrollbar-width: none; }
 
@@ -43,34 +42,30 @@
             grid-template-areas: 
                 "nav nav"
                 "main scroll";
-            grid-template-rows: auto 1fr;
+            grid-template-rows: auto 1fr auto;
             grid-template-columns: 1fr var(--scrollbar-width);
             background-color: var(--bg-color); color: var(--text-color);
             font-family: sans-serif;
         }
 
-        /* --- カスタムスクロールバー専用エリア --- */
         #scroll-area {
             grid-area: scroll;
             background: rgba(0,0,0,0.03);
             position: relative;
-            z-index: 2000;
+            z-index: 1000;
             border-left: 1px solid rgba(0,0,0,0.05);
             touch-action: none;
         }
         #scroll-thumb {
             position: absolute;
             left: 3px;
-            width: 18px; 
-            height: 100px; /* 掴みやすい高さ */
+            width: 18px; height: 100px;
             background: var(--main-color);
             border-radius: 10px;
             cursor: grab;
             box-shadow: 0 2px 6px rgba(0,0,0,0.2);
         }
-        #scroll-thumb:active { cursor: grabbing; transform: scaleX(1.1); }
 
-        /* --- 上に戻るボタン（バーの左側に配置） --- */
         #back-to-top {
             position: fixed;
             right: 35px; bottom: 90px;
@@ -80,10 +75,29 @@
             display: flex; align-items: center; justify-content: center;
             font-size: 1.5rem; cursor: pointer;
             box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-            z-index: 1500; opacity: 0; visibility: hidden;
+            z-index: 900; opacity: 0; visibility: hidden;
             transition: all 0.2s ease;
         }
         #back-to-top.show { opacity: 1; visibility: visible; }
+
+        /* --- 画像拡大（ライトボックス） --- */
+        #overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 3000; /* 最前面 */
+            cursor: zoom-out;
+        }
+        #overlay img {
+            max-width: 95%;
+            max-height: 95%;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+            border-radius: 5px;
+            background: #fff;
+        }
 
         .reveal { opacity: 0; transform: translateX(30px); transition: opacity 0.4s ease, transform 0.4s ease-out; }
         .reveal.active { opacity: 1; transform: translateX(0); }
@@ -111,25 +125,14 @@
         .item-name-box label { font-weight: bold; margin-left: 15px; font-size: 1.2rem; }
         .hint { margin-top: 15px; font-size: 1rem; background: var(--hint-bg); color: var(--hint-text); padding: 15px; border-radius: 8px; }
         .img-container { text-align: center; margin-top: 10px; }
-        .comparison-img { width: var(--img-size); max-width: 100%; border-radius: 8px; border: 1px solid #ddd; }
+        .comparison-img { width: var(--img-size); max-width: 100%; border-radius: 8px; border: 1px solid #ddd; cursor: zoom-in; }
         
-        footer { 
-            background: var(--sidebar-bg); padding: 10px; 
-            display: flex; gap: 10px; border-top: 1px solid rgba(0,0,0,0.1); 
-            justify-content: space-around; width: 100%;
-        }
-        /* モバイルではフッターをmainの中ではなく下に置くための調整 */
-        body { grid-template-rows: auto 1fr auto; }
-        footer { grid-column: 1 / 3; }
+        footer { grid-column: 1 / 3; background: var(--sidebar-bg); padding: 10px; display: flex; gap: 10px; border-top: 1px solid rgba(0,0,0,0.1); justify-content: space-around; }
 
         .btn { width: 50px; height: 50px; border: none; border-radius: 50%; background: var(--main-color); color: white; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; box-shadow: 0 3px 8px rgba(0,0,0,0.15); }
 
         @media (min-width: 768px) {
-            body { 
-                grid-template-areas: "nav main scroll"; 
-                grid-template-columns: 260px 1fr var(--scrollbar-width); 
-                grid-template-rows: 1fr auto;
-            }
+            body { grid-template-areas: "nav main scroll"; grid-template-columns: 260px 1fr var(--scrollbar-width); grid-template-rows: 1fr auto; }
             nav { border-bottom: none; border-right: 3px solid var(--main-color); height: 100vh; grid-row: 1 / 3; }
             .tabs-row { flex-direction: column; padding: 20px 10px; }
             footer { position: fixed; bottom: 30px; right: 80px; flex-direction: column; background: transparent; border: none; width: auto; }
@@ -140,6 +143,8 @@
     </style>
 </head>
 <body>
+
+<div id="overlay" onclick="closeImage()"><img id="overlay-img" src=""></div>
 
 <nav>
     <div class="tabs-row">
@@ -167,10 +172,7 @@
     <div id="statues" class="content"></div>
 </main>
 
-<div id="scroll-area">
-    <div id="scroll-thumb"></div>
-</div>
-
+<div id="scroll-area"><div id="scroll-thumb"></div></div>
 <div id="back-to-top" onclick="scrollToTop()">▲</div>
 
 <footer>
@@ -226,7 +228,7 @@ const data = {
         {name: "てがかりのちょうこく", hint: "青く光っているのが偽物"},
         {name: "とてつもないちょうこく", hint: "取手の蓋があるのが偽物"},
         {name: "なじみのあるちょうこく", hint: "本物のみ"},
-        {name: "ほぼせいあふれるちょうこく", hint: "舌が出ているのが偽物"},
+        {name: "ぼせいあふれるちょうこく", hint: "舌が出ているのが偽物"},
         {name: "もののふのちょうこく", hint: "道具を持っているのが偽物"},
         {name: "りりしいちょうこく", hint: "右脇に本を抱えているのが偽物"}
     ]
@@ -237,42 +239,44 @@ const scrollThumb = document.getElementById('scroll-thumb');
 const scrollArea = document.getElementById('scroll-area');
 const topBtn = document.getElementById('back-to-top');
 
-// --- 高速スクロール同期 ---
+// --- 画像拡大処理 ---
+function openImage(src) {
+    const overlay = document.getElementById('overlay');
+    const img = document.getElementById('overlay-img');
+    img.src = src;
+    overlay.style.display = 'flex';
+}
+function closeImage() {
+    document.getElementById('overlay').style.display = 'none';
+}
+
+// --- スクロール・ドラッグ同期 ---
 function syncThumb() {
     const scrollMax = mainScroll.scrollHeight - mainScroll.clientHeight;
     if (scrollMax <= 0) return;
     const pct = mainScroll.scrollTop / scrollMax;
     const thumbMax = scrollArea.clientHeight - scrollThumb.clientHeight;
     scrollThumb.style.top = (pct * thumbMax) + 'px';
-
     if (mainScroll.scrollTop > 300) topBtn.classList.add('show');
     else topBtn.classList.remove('show');
 }
-
 mainScroll.addEventListener('scroll', () => requestAnimationFrame(syncThumb));
 
-// --- ドラッグ制御 ---
 let isDragging = false;
 let startY, startScrollTop;
-
 const startDrag = (e) => {
-    isDragging = true;
-    mainScroll.style.scrollBehavior = 'auto';
-    startY = e.pageY || e.touches[0].pageY;
-    startScrollTop = mainScroll.scrollTop;
+    isDragging = true; mainScroll.style.scrollBehavior = 'auto';
+    startY = e.pageY || e.touches[0].pageY; startScrollTop = mainScroll.scrollTop;
     document.body.style.userSelect = 'none';
 };
-
 const doDrag = (e) => {
     if (!isDragging) return;
     const currentY = e.pageY || (e.touches ? e.touches[0].pageY : 0);
     const deltaY = currentY - startY;
     const scrollMax = mainScroll.scrollHeight - mainScroll.clientHeight;
     const thumbMax = scrollArea.clientHeight - scrollThumb.clientHeight;
-    
     mainScroll.scrollTop = startScrollTop + (deltaY / thumbMax * scrollMax);
 };
-
 const stopDrag = () => { isDragging = false; document.body.style.userSelect = ''; };
 
 scrollThumb.addEventListener('mousedown', startDrag);
@@ -282,24 +286,9 @@ window.addEventListener('touchmove', doDrag, {passive: false});
 window.addEventListener('mouseup', stopDrag);
 window.addEventListener('touchend', stopDrag);
 
-function scrollToTop() {
-    mainScroll.style.scrollBehavior = 'smooth';
-    mainScroll.scrollTo({ top: 0 });
-}
+function scrollToTop() { mainScroll.style.scrollBehavior = 'smooth'; mainScroll.scrollTo({ top: 0 }); }
 
-// --- リスト生成と基本機能 ---
-function changeImgSize(val) {
-    document.documentElement.style.setProperty('--img-size', val + '%');
-    localStorage.setItem('savedImgSize', val);
-}
-
-const observer = new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
-        if (entry.isIntersecting) entry.target.classList.add('active');
-        else entry.target.classList.remove('active');
-    });
-}, { threshold: 0.1 });
-
+// --- リスト生成 ---
 function createList(type, listId) {
     const container = document.getElementById(listId);
     const subDir = type === 'paintings' ? 'painting/' : 'sculpture/';
@@ -308,9 +297,10 @@ function createList(type, listId) {
         div.className = 'item reveal';
         const checkId = `check-${item.name}`;
         const isChecked = localStorage.getItem(checkId) === 'true';
+        const imgSrc = `${GITHUB_RAW_BASE}${subDir}${encodeURIComponent(item.name)}.jpeg`;
         div.innerHTML = `
             <div class="item-name-box"><input type="checkbox" id="${checkId}" ${isChecked ? 'checked' : ''} onclick="updateStatus(this.id)"><label>${item.name}</label></div>
-            <div class="hint"><div><b>偽物の特徴:</b> ${item.hint}</div><div class="img-container"><img src="${GITHUB_RAW_BASE}${subDir}${encodeURIComponent(item.name)}.jpeg" class="comparison-img" onerror="this.parentElement.parentElement.style.display='none'"></div></div>
+            <div class="hint"><div><b>偽物の特徴:</b> ${item.hint}</div><div class="img-container"><img src="${imgSrc}" class="comparison-img" onclick="event.stopPropagation(); openImage(this.src)" onerror="this.parentElement.parentElement.style.display='none'"></div></div>
         `;
         div.onclick = (e) => { if (e.target.tagName !== 'INPUT' && e.target.tagName !== 'IMG') { const c = div.querySelector('input'); c.checked = !c.checked; updateStatus(c.id); } };
         container.appendChild(div);
@@ -318,6 +308,12 @@ function createList(type, listId) {
     });
 }
 
+// --- その他基本機能 ---
+const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => { if (entry.isIntersecting) entry.target.classList.add('active'); else entry.target.classList.remove('active'); });
+}, { threshold: 0.1 });
+
+function changeImgSize(val) { document.documentElement.style.setProperty('--img-size', val + '%'); localStorage.setItem('savedImgSize', val); }
 function showTab(tabName) {
     document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
     document.getElementById(`btn-${tabName}`).classList.add('active');
@@ -325,12 +321,7 @@ function showTab(tabName) {
     document.getElementById(tabName).classList.add('active');
     mainScroll.scrollTop = 0;
 }
-
-function updateStatus(id) {
-    localStorage.setItem(id, document.getElementById(id).checked);
-    updateProgressBar();
-}
-
+function updateStatus(id) { localStorage.setItem(id, document.getElementById(id).checked); updateProgressBar(); }
 function updateProgressBar() {
     ['paintings', 'statues'].forEach(cat => {
         const key = cat === 'paintings' ? 'p' : 's';
@@ -340,22 +331,18 @@ function updateProgressBar() {
         document.getElementById(`bar-${key}`).style.width = `${(checked/total)*100}%`;
     });
 }
-
 function exportJSON() {
     const s = {}; Object.keys(localStorage).forEach(k => { if(k.startsWith('check-')) s[k] = localStorage.getItem(k); });
     let f = prompt("名前をつけて保存", "あつ森美術品リスト");
     if (f) { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(s)], {type:'application/json'})); a.download = `${f}.json`; a.click(); }
 }
-
 function importJSON(e) {
     const r = new FileReader(); r.onload = (x) => { const j = JSON.parse(x.target.result); Object.keys(j).forEach(k => localStorage.setItem(k, j[k])); location.reload(); };
     r.readAsText(e.target.files[0]);
 }
-
 function toggleDarkMode() { localStorage.setItem('darkMode', document.body.classList.toggle('dark-mode')); }
 
-createList('paintings', 'paintings');
-createList('statues', 'statues');
+createList('paintings', 'paintings'); createList('statues', 'statues');
 updateProgressBar();
 if (localStorage.getItem('darkMode') === 'true') document.body.classList.add('dark-mode');
 const sv = localStorage.getItem('savedImgSize'); if (sv) { document.getElementById('size-slider').value = sv; changeImgSize(sv); }
