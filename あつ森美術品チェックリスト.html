@@ -34,7 +34,7 @@
             overflow: hidden; touch-action: none;
         }
 
-        /* 横画面時のCATEGORYラベル（初期は非表示） */
+        /* 横画面時のCATEGORYラベル */
         .category-label {
             display: none;
             padding: 20px 18px 10px;
@@ -79,7 +79,7 @@
         @media (min-width: 1024px) {
             body { grid-template-areas: "nav main"; grid-template-columns: 220px 1fr; grid-template-rows: 1fr; }
             nav { border-bottom: none; border-right: 3px solid var(--main-color); height: 100vh; }
-            .category-label { display: block; } /* 横画面で表示 */
+            .category-label { display: block; }
             .tabs-row { flex-direction: column; }
             footer { position: fixed; top: 20px; right: 20px; flex-direction: column; background: transparent; border: none; width: auto; padding: 0; }
             .btn { 
@@ -183,10 +183,10 @@ function createList(type, listId) {
         const div = document.createElement('div');
         div.className = 'item reveal';
         const id = `check-${item.name}`;
-        const checked = localStorage.getItem(id) === 'true' ? 'checked' : '';
+        const isChecked = localStorage.getItem(id) === 'true';
         div.innerHTML = `
             <div style="display:flex; align-items:center;">
-                <input type="checkbox" id="${id}" ${checked} onclick="updateStatus('${id}')">
+                <input type="checkbox" id="${id}" ${isChecked ? 'checked' : ''} onclick="updateStatus('${id}')">
                 <label for="${id}" style="font-weight:bold; cursor:pointer; flex:1; margin-left:10px;">${item.name}</label>
             </div>
             <div class="hint">${item.hint}</div>
@@ -225,8 +225,7 @@ function showTab(tabName) {
 
 function updateStatus(id) {
     const cb = document.getElementById(id);
-    if (cb.checked) localStorage.setItem(id, 'true');
-    else localStorage.removeItem(id);
+    localStorage.setItem(id, cb.checked ? 'true' : 'false');
     updateProgressBar();
 }
 
@@ -241,17 +240,22 @@ function updateProgressBar() {
     });
 }
 
-// ファイル名を指定して保存
+// 【修正版】すべてのアイテムのtrue/falseを確実に保存
 function exportJSON() {
     const fileName = prompt("保存する名前を入力してください:", "あつ森美術品チェック");
-    if (fileName === null) return; // キャンセルされた場合
+    if (fileName === null) return;
 
     const storageData = {};
-    for (let i = 0; i < localStorage.length; i++) {
-        const key = localStorage.key(i);
-        if (key && key.startsWith('check-')) storageData[key] = true;
-    }
-    const blob = new Blob([JSON.stringify(storageData)], { type: 'application/json' });
+    ['paintings', 'statues'].forEach(cat => {
+        data[cat].forEach(item => {
+            const id = `check-${item.name}`;
+            const status = localStorage.getItem(id);
+            // まだ触っていないものは "false" として記録
+            storageData[id] = status ? status : "false";
+        });
+    });
+
+    const blob = new Blob([JSON.stringify(storageData, null, 2)], { type: 'application/json' });
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
     a.download = `${fileName || 'art_check'}.json`;
@@ -261,9 +265,15 @@ function exportJSON() {
 function importJSON(event) {
     const reader = new FileReader();
     reader.onload = (e) => {
-        const imported = JSON.parse(e.target.result);
-        Object.keys(imported).forEach(k => localStorage.setItem(k, 'true'));
-        location.reload();
+        try {
+            const imported = JSON.parse(e.target.result);
+            Object.keys(imported).forEach(k => {
+                localStorage.setItem(k, imported[k]);
+            });
+            location.reload();
+        } catch (err) {
+            alert("ロードに失敗しました。");
+        }
     };
     reader.readAsText(event.target.files[0]);
 }
