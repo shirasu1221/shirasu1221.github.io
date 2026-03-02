@@ -12,19 +12,19 @@
             <key>kind</key>
             <string>software-package</string>
             <key>url</key>
-            <string>https://www.dropbox.com/scl/fi/z8vsy55rayxl0hv54vdri/signed_85iJ32hlQtOk.ipa?rlkey=kpgg7gm5j7vre1qf83fh4hr7b&st=k7l2e21o&dl=1</string>
+            <string>https://www.dropbox.com/scl/fi/uw0sx9ce2zmu0occ56zq0/signed_qNb6wmL4RECK.ipa?rlkey=g6za27kmr08ydjskqw2cyh9xa&st=szzt8nxk&dl=1</string>
           </dict>
         </array>
         <key>metadata</key>
         <dict>
           <key>bundle-identifier</key>
-          <string>AmongUs</string>
+          <string>Esign</string>
           <key>bundle-version</key>
-          <string>2025.12.11</string>
+          <string>5.0.1</string>
           <key>kind</key>
           <string>software</string>
           <key>title</key>
-          <string>Among Us!</string>
+          <string>Esign</string>
         </dict>
       </dict>
     </array>
