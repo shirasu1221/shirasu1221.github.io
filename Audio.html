@@ -2,27 +2,12 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>Visualizer Pro - Kawaii Edition</title>
+    <title>Visualizer Pro - Kawaii Colors</title>
     <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;700&display=swap" rel="stylesheet">
     <style>
-        /* 全体に可愛いフォントを適用 */
-        * { font-family: 'M PLUS Rounded 1c', sans-serif; }
-
-        html, body { 
-            position: fixed; 
-            width: 100%; 
-            height: 100%; 
-            margin: 0; 
-            overflow: hidden; 
-            background: #000;
-        }
-        canvas { 
-            position: absolute; 
-            top: 0; 
-            left: 0; 
-            z-index: 5; 
-            cursor: pointer; 
-        }
+        * { font-family: 'M PLUS Rounded 1c', sans-serif; box-sizing: border-box; }
+        html, body { position: fixed; width: 100%; height: 100%; margin: 0; overflow: hidden; background: #000; }
+        canvas { position: absolute; top: 0; left: 0; z-index: 5; cursor: pointer; }
         
         #recTimer {
             position: fixed; top: 10%; left: 50%; transform: translateX(-50%);
@@ -35,24 +20,21 @@
             position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
             width: 90%; max-width: 380px; z-index: 15;
             background: rgba(20, 20, 20, 0.92); padding: 25px; border-radius: 30px;
-            border: 2px solid #ff85a2; text-align: center; max-height: 80vh; overflow-y: auto; box-sizing: border-box;
+            border: 2px solid #ff85a2; text-align: center; max-height: 80vh; overflow-y: auto;
             box-shadow: 0 0 30px rgba(255, 133, 162, 0.2);
         }
         .hidden { opacity: 0; visibility: hidden; pointer-events: none; }
-        
-        /* ボタンのデザインをより丸く可愛く */
         .btn { cursor: pointer; padding: 12px; border: none; border-radius: 20px; font-weight: 700; width: 100%; margin-top: 10px; font-size: 14px; transition: 0.3s; }
         .btn-primary { background: #ff85a2; color: #fff; }
         .btn-play { background: #7ae582; color: #fff; }
         .btn-rec { background: #ff5c8a; color: #fff; }
-        .btn:active { transform: scale(0.95); }
-        
         .recording { animation: pulse 1.5s infinite; background: #e63946 !important; }
         
         .control-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; gap: 8px; text-align: left; }
-        label { font-size: 13px; color: #ffc2d1; min-width: 60px; font-weight: 700; }
+        label { font-size: 13px; color: #ffc2d1; min-width: 70px; font-weight: 700; }
         input, select { background: #333; color: #fff; border: 1px solid #555; padding: 8px; border-radius: 12px; flex: 1; min-width: 0; text-align: center; }
-        
+        input[type="color"] { padding: 2px; height: 38px; cursor: pointer; }
+
         .rec-range { background: rgba(255, 133, 162, 0.1); padding: 15px; border-radius: 20px; border: 1.5px dashed #ff85a2; margin: 15px 0; }
         #fileList { margin: 10px 0; max-height: 80px; overflow-y: auto; background: #222; border-radius: 12px; }
         .file-item { padding: 8px 12px; border-bottom: 1px solid #333; display: flex; justify-content: space-between; font-size: 12px; align-items: center; }
@@ -68,24 +50,39 @@
 
 <div id="uiPanel">
     <div id="initSection">
-        <button id="startBtn" class="btn btn-primary">はじめる！</button>
+        <button id="startBtn" class="btn btn-primary">システムを開始する</button>
     </div>
     <div id="mainControls" class="hidden">
         <div class="control-row">
-            <label>モード</label>
+            <label>スペクトラムアナライザの色</label>
+            <select id="colorMode">
+                <option value="kawaii">パステル</option>
+                <option value="custom">えらんだ色</option>
+                <option value="rainbow">にじいろ</option>
+            </select>
+        </div>
+        <div class="control-row" id="customColorRow" style="display:none;">
+            <label>好きな色</label>
+            <input type="color" id="barColor" value="#ffc2d1">
+        </div>
+
+        <div class="control-row">
+            <label>形</label>
             <select id="modeSelect">
-                <option value="circle">円形</option>
+                <option value="circle">丸</option>
                 <option value="solid_rect">四角</option>
                 <option value="horizontal">横</option>
                 <option value="vertical">縦</option>
             </select>
         </div>
+
         <input type="file" id="audioInput" multiple accept=".mp3,.wav,.m4a" style="display:none;">
         <button class="btn" style="background:#444; color:#fff;" onclick="document.getElementById('audioInput').click()">＋ 曲を追加</button>
         <div id="fileList"></div>
         <button id="playBtn" class="btn btn-play">再生 / 停止</button>
+
         <div class="rec-range">
-            <div style="font-size: 12px; color: #ff85a2; margin-bottom: 8px; font-weight: 700;">録画する範囲</div>
+            <div style="font-size: 12px; color: #ff85a2; margin-bottom: 8px; font-weight: 700;">🎥 録画する範囲</div>
             <div class="control-row">
                 <label>スタート</label>
                 <input type="number" id="startTime" value="0" step="0.5">
@@ -94,12 +91,11 @@
             </div>
             <button id="rangeRecBtn" class="btn btn-rec">この範囲を録画する</button>
         </div>
-        <button class="btn" style="background:#222; color:#888;" onclick="toggleUI()">UIをとじる</button>
+        <button class="btn" style="background:#222; color:#888;" onclick="toggleUI()">UIを閉じる</button>
     </div>
 </div>
 
 <script>
-    /* JavaScriptロジックは前回と同じ（安定版）を維持 */
     let audioCtx, analyzer, source, destStream;
     let mediaRecorder, recordedChunks = [];
     let currentBuffer = null;
@@ -115,6 +111,11 @@
         canvas.width = initialWidth; canvas.height = initialHeight;
     }
     window.addEventListener('resize', resizeCanvas); resizeCanvas();
+
+    // 色設定の表示切り替え
+    document.getElementById('colorMode').onchange = function() {
+        document.getElementById('customColorRow').style.display = (this.value === 'custom') ? 'flex' : 'none';
+    };
 
     function toggleUI() { document.getElementById('uiPanel').classList.toggle('hidden'); }
     canvas.onclick = () => { document.getElementById('uiPanel').classList.remove('hidden'); };
@@ -188,6 +189,17 @@
         const btn = document.getElementById('rangeRecBtn'); btn.classList.remove('recording'); btn.textContent = "この範囲を録画する";
     }
 
+    function getBarColor(i, total, mode, userColor) {
+        if (mode === 'kawaii') {
+            // パステルピンク〜パープルのグラデーション
+            return `hsla(${330 + (i/total)*40}, 100%, 85%, 0.9)`;
+        } else if (mode === 'custom') {
+            return userColor + "EE"; // 透明度を追加
+        } else {
+            return `hsla(${(i/total)*360}, 95%, 70%, 0.9)`; // にじいろ
+        }
+    }
+
     function draw() {
         requestAnimationFrame(draw); if(!analyzer) return;
         const imgAspect = bgImg.width / bgImg.height, canvasAspect = canvas.width / canvas.height;
@@ -200,6 +212,8 @@
         const rawData = new Uint8Array(analyzer.frequencyBinCount);
         analyzer.getByteFrequencyData(rawData);
         const mode = document.getElementById('modeSelect').value;
+        const cMode = document.getElementById('colorMode').value;
+        const uColor = document.getElementById('barColor').value;
 
         if (mode === 'circle') {
             const cx = canvas.width * 0.25, cy = canvas.height * 0.25, r = 80;
@@ -208,7 +222,7 @@
                 const val = rawData[Math.floor(Math.pow((i % 90) / 90, 1.2) * 200)];
                 const h = Math.pow(val / 255, 1.5) * 80;
                 const rad = i * (Math.PI * 2 / 180);
-                ctx.strokeStyle = `hsla(${(i/180)*360}, 95%, 70%, 0.9)`;
+                ctx.strokeStyle = getBarColor(i, 180, cMode, uColor);
                 ctx.lineWidth = 2.5; ctx.lineCap = "round"; ctx.beginPath();
                 ctx.moveTo(cx + Math.cos(rad)*r, cy + Math.sin(rad)*r); ctx.lineTo(cx + Math.cos(rad)*(r+h), cy + Math.sin(rad)*(r+h)); ctx.stroke();
             }
@@ -217,7 +231,7 @@
             for (let i = 0; i < bars; i++) {
                 const val = rawData[Math.floor(Math.pow(i / bars, 1.5) * (rawData.length / 2))];
                 const h = (val / 255) * (canvas.height * 0.7);
-                ctx.fillStyle = `hsla(${(i/bars)*360}, 90%, 60%, 0.85)`;
+                ctx.fillStyle = getBarColor(i, bars, cMode, uColor);
                 ctx.fillRect(i * bw, canvas.height - h, bw - 1, h);
             }
         } else if (mode === 'horizontal' || mode === 'vertical') {
@@ -226,7 +240,7 @@
             for (let i = 0; i < bars; i++) {
                 const val = rawData[Math.floor(Math.pow(i/bars, 1.5) * 250)];
                 const h = Math.pow(val / 255, 1.5) * 130;
-                ctx.strokeStyle = `hsla(${(i/bars)*360}, 90%, 65%, 0.95)`;
+                ctx.strokeStyle = getBarColor(i, bars, cMode, uColor);
                 ctx.lineWidth = 3; ctx.lineCap = "round"; ctx.beginPath();
                 if(isH) { ctx.moveTo(i*unit, base-h); ctx.lineTo(i*unit, base+h); }
                 else { ctx.moveTo(base-h, i*unit); ctx.lineTo(base+h, i*unit); }
