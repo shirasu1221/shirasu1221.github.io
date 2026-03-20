@@ -2,14 +2,9 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>Needle Bidirectional Visualizer</title>
+    <title>Visualizer with Background Recording</title>
     <style>
         body { font-family: sans-serif; background: #000; color: #fff; margin: 0; overflow: hidden; }
-        #skyBg { 
-            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 1;
-            background: url('https://raw.githubusercontent.com/shirasu1221/shirasu1221.github.io/main/IMG_0518.jpeg') center/cover no-repeat;
-            filter: brightness(0.5); display: none;
-        }
         #visualizer { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 5; cursor: pointer; }
         #uiPanel {
             position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
@@ -20,45 +15,56 @@
         .hidden { opacity: 0; visibility: hidden; pointer-events: none; }
         .btn { cursor: pointer; padding: 12px 20px; border: none; border-radius: 8px; font-weight: bold; margin: 5px; transition: 0.2s; }
         .btn-start { background: #00f2ff; color: #000; width: 100%; font-size: 1.2em; }
+        .btn-rec { background: #ff1744; color: #fff; width: 100%; margin-top: 10px; display: none; }
+        .recording { animation: pulse 1.5s infinite; background: #b71c1c !important; }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.6; } 100% { opacity: 1; } }
         #fileList { margin: 20px 0; max-height: 200px; overflow-y: auto; text-align: left; }
         .file-item { background: #222; padding: 10px; margin-bottom: 5px; border-radius: 5px; display: flex; justify-content: space-between; align-items: center; }
     </style>
 </head>
 <body>
 
-<div id="skyBg"></div>
 <canvas id="visualizer"></canvas>
 
 <div id="uiPanel">
-    <button id="startBtn" class="btn btn-start">1. クリックして開始</button>
+    <button id="startBtn" class="btn btn-start">1. システム開始</button>
     <div id="mainControls" style="display:none; margin-top:20px;">
         <input type="file" id="audioInput" multiple accept=".mp3,.wav,.m4a" style="display:none;">
-        <button class="btn" style="background:#444; color:#fff; width:100%;" onclick="document.getElementById('audioInput').click()">2. 音楽ファイルを選択</button>
+        <button class="btn" style="background:#444; color:#fff; width:100%;" onclick="document.getElementById('audioInput').click()">2. 音楽を選択</button>
         <div id="fileList"></div>
-        <button class="btn" style="background:#ff00ea; color:#fff; width:100%;" onclick="toggleUI()">全画面表示 (Visualizer)</button>
+        <button id="recBtn" class="btn btn-rec">録画開始</button>
+        <button class="btn" style="background:#ff00ea; color:#fff; width:100%;" onclick="toggleUI()">全画面切替</button>
     </div>
 </div>
 
 <script>
-    let audioCtx, analyzer, source;
+    let audioCtx, analyzer, source, dest;
+    let mediaRecorder, recordedChunks = [];
     const canvas = document.getElementById('visualizer');
     const ctx = canvas.getContext('2d');
-    const skyBg = document.getElementById('skyBg');
     const uiPanel = document.getElementById('uiPanel');
+    const recBtn = document.getElementById('recBtn');
+
+    // 背景画像の準備
+    const bgImg = new Image();
+    bgImg.crossOrigin = "anonymous"; // 録画時のセキュリティエラー防止
+    bgImg.src = 'https://raw.githubusercontent.com/shirasu1221/shirasu1221.github.io/main/IMG_0518.jpeg';
 
     document.getElementById('startBtn').onclick = function() {
         audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         analyzer = audioCtx.createAnalyser();
         analyzer.fftSize = 1024;
-        analyzer.smoothingTimeConstant = 0.6; // 適度なキレと滑らかさ
+        analyzer.smoothingTimeConstant = 0.6;
+        dest = audioCtx.createMediaStreamDestination();
+        
         this.style.display = 'none';
         document.getElementById('mainControls').style.display = 'block';
+        recBtn.style.display = 'block';
         draw();
     };
 
     function toggleUI() {
         uiPanel.classList.toggle('hidden');
-        skyBg.style.display = uiPanel.classList.contains('hidden') ? 'block' : 'none';
     }
 
     canvas.onclick = () => { if(uiPanel.classList.contains('hidden')) toggleUI(); };
@@ -85,48 +91,81 @@
         source.buffer = window.loadedFiles[index].buffer;
         source.connect(analyzer);
         analyzer.connect(audioCtx.destination);
+        analyzer.connect(dest);
         source.start(0);
     }
+
+    recBtn.onclick = () => {
+        if (mediaRecorder && mediaRecorder.state === "recording") {
+            mediaRecorder.stop();
+            recBtn.textContent = "録画開始";
+            recBtn.classList.remove("recording");
+        } else {
+            recordedChunks = [];
+            const canvasStream = canvas.captureStream(60);
+            const combinedStream = new MediaStream([
+                ...canvasStream.getVideoTracks(),
+                ...dest.stream.getAudioTracks()
+            ]);
+
+            mediaRecorder = new MediaRecorder(combinedStream, { mimeType: 'video/webm;codecs=vp9,opus' });
+            mediaRecorder.ondataavailable = (e) => { if (e.data.size > 0) recordedChunks.push(e.data); };
+            mediaRecorder.onstop = () => {
+                const blob = new Blob(recordedChunks, { type: "video/webm" });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement("a");
+                a.href = url;
+                a.download = "visualizer_with_bg.webm";
+                a.click();
+            };
+            mediaRecorder.start();
+            recBtn.textContent = "録画中...停止して保存";
+            recBtn.classList.add("recording");
+        }
+    };
 
     function draw() {
         requestAnimationFrame(draw);
         if(!analyzer) return;
 
+        // --- 背景の描画（これを録画に載せるためにCanvasに直接描く） ---
+        // 画面いっぱいにカバーするように計算
+        const scale = Math.max(canvas.width / bgImg.width, canvas.height / bgImg.height);
+        const w = bgImg.width * scale;
+        const h = bgImg.height * scale;
+        const x = (canvas.width - w) / 2;
+        const y = (canvas.height - h) / 2;
+        
+        ctx.drawImage(bgImg, x, y, w, h);
+        
+        // 背景を暗くするフィルタ（image_3.pngのような雰囲気に）
+        ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        // --- スペクトラムの描画 ---
         const dataArray = new Uint8Array(analyzer.frequencyBinCount);
         analyzer.getByteFrequencyData(dataArray);
 
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-        // 左上に配置
         const centerX = canvas.width * 0.25;
         const centerY = canvas.height * 0.25;
         const baseRadius = 80; 
-        
-        // 動画に合わせてバーの数を調整
         const bars = 160; 
         const slice = (Math.PI * 2) / bars;
 
         ctx.strokeStyle = '#fff';
-        ctx.lineWidth = 1.5; // 針のような鋭い太さ
-        ctx.lineCap = 'butt';
+        ctx.lineWidth = 1.5;
 
         for (let i = 0; i < bars; i++) {
             const dataIndex = Math.floor(i * (dataArray.length / bars) * 0.6);
             const rawVal = dataArray[dataIndex];
-            
-            // 針の長さ（感度高め）
             const barHeight = Math.pow(rawVal / 255, 1.5) * 60; 
 
             const angle = i * slice;
             const cosA = Math.cos(angle);
             const sinA = Math.sin(angle);
             
-            // 動画のように内側と外側に等しく広げる
-            // 始点：中心に向かって伸びる
             const x1 = centerX + cosA * (baseRadius - barHeight);
             const y1 = centerY + sinA * (baseRadius - barHeight);
-            
-            // 終点：外側に向かって伸びる
             const x2 = centerX + cosA * (baseRadius + barHeight);
             const y2 = centerY + sinA * (baseRadius + barHeight);
 
@@ -136,7 +175,7 @@
             ctx.stroke();
         }
 
-        // 土台となるガイドの円を薄く描画
+        // ガイドの円
         ctx.beginPath();
         ctx.arc(centerX, centerY, baseRadius, 0, Math.PI * 2);
         ctx.strokeStyle = 'rgba(255,255,255,0.2)';
