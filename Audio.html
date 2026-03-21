@@ -2,252 +2,277 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>Visualizer Pro - Kawaii Colors</title>
+    <title>Spectrum Analyzer</title>
     <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;700&display=swap" rel="stylesheet">
     <style>
-        * { font-family: 'M PLUS Rounded 1c', sans-serif; box-sizing: border-box; }
-        html, body { position: fixed; width: 100%; height: 100%; margin: 0; overflow: hidden; background: #000; }
-        canvas { position: absolute; top: 0; left: 0; z-index: 5; cursor: pointer; }
-        
-        #recTimer {
-            position: fixed; top: 10%; left: 50%; transform: translateX(-50%);
-            font-size: clamp(24px, 5vw, 40px); font-weight: 700; color: #ff85a2; z-index: 20;
-            text-shadow: 0 0 15px rgba(0,0,0,0.8); pointer-events: none; opacity: 0; transition: 0.3s;
-        }
-        #recTimer.active { opacity: 1; }
-
-        #uiPanel {
-            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            width: 90%; max-width: 380px; z-index: 15;
-            background: rgba(20, 20, 20, 0.92); padding: 25px; border-radius: 30px;
-            border: 2px solid #ff85a2; text-align: center; max-height: 80vh; overflow-y: auto;
-            box-shadow: 0 0 30px rgba(255, 133, 162, 0.2);
-        }
-        .hidden { opacity: 0; visibility: hidden; pointer-events: none; }
-        .btn { cursor: pointer; padding: 12px; border: none; border-radius: 20px; font-weight: 700; width: 100%; margin-top: 10px; font-size: 14px; transition: 0.3s; }
+        * { font-family: 'M PLUS Rounded 1c', sans-serif; box-sizing: border-box; -webkit-user-select: none; touch-action: manipulation; }
+        html, body { position: fixed; width: 100%; height: 100%; margin: 0; overflow: hidden; background: #000; left: 0; top: 0; }
+        canvas { position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 5; cursor: pointer; }
+        #topInfo { position: fixed; top: 20px; width: 100%; color: #fff; text-align: center; z-index: 20; font-weight: bold; text-shadow: 0 0 8px #000; pointer-events: none; }
+        #progressBar { position: fixed; top: 0; left: 0; width: 0%; height: 5px; background: #ff85a2; z-index: 25; box-shadow: 0 0 10px #ff85a2; }
+        #uiPanel { position: absolute; top: 50%; left: 50%; width: 95%; max-width: 440px; z-index: 15; background: rgba(15, 15, 15, 0.98); padding: 25px; border-radius: 30px; border: 2px solid #ff85a2; transform: translate(-50%, -50%); max-height: 85vh; overflow-y: auto; transition: 0.3s; }
+        #uiPanel.hidden { opacity: 0; visibility: hidden; transform: translate(-50%, -45%) scale(0.9); }
+        .ui-section { border-bottom: 1px solid #333; margin-bottom: 15px; padding-bottom: 15px; }
+        .section-title { font-size: 12px; color: #ff85a2; font-weight: 700; margin-bottom: 12px; }
+        .picker-group { display: flex; justify-content: center; align-items: center; gap: 6px; margin: 10px 0; }
+        .picker-label { color: #ffc2d1; font-size: 11px; width: 35px; font-weight: bold; }
+        .drum-wrapper { position: relative; height: 90px; width: 60px; overflow: hidden; background: #1a1a1a; border-radius: 12px; border: 1px solid #333; }
+        .drum-list { position: absolute; width: 100%; transition: transform 0.2s cubic-bezier(0.1, 0.7, 0.1, 1); }
+        .drum-item { height: 30px; line-height: 30px; color: #444; font-size: 15px; text-align: center; }
+        .drum-item.selected { color: #ff85a2; font-size: 18px; font-weight: bold; }
+        .control-row { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+        label { font-size: 11px; color: #ffc2d1; min-width: 75px; font-weight: bold; }
+        select, input[type="range"], input[type="color"] { flex: 1; background: #222; color: #fff; border: 1px solid #444; border-radius: 10px; height: 35px; }
+        .btn { cursor: pointer; padding: 12px; border: none; border-radius: 20px; font-weight: 700; width: 100%; margin-top: 8px; transition: 0.2s; }
         .btn-primary { background: #ff85a2; color: #fff; }
-        .btn-play { background: #7ae582; color: #fff; }
         .btn-rec { background: #ff5c8a; color: #fff; }
-        .recording { animation: pulse 1.5s infinite; background: #e63946 !important; }
-        
-        .control-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; gap: 8px; text-align: left; }
-        label { font-size: 13px; color: #ffc2d1; min-width: 70px; font-weight: 700; }
-        input, select { background: #333; color: #fff; border: 1px solid #555; padding: 8px; border-radius: 12px; flex: 1; min-width: 0; text-align: center; }
-        input[type="color"] { padding: 2px; height: 38px; cursor: pointer; }
-
-        .rec-range { background: rgba(255, 133, 162, 0.1); padding: 15px; border-radius: 20px; border: 1.5px dashed #ff85a2; margin: 15px 0; }
-        #fileList { margin: 10px 0; max-height: 80px; overflow-y: auto; background: #222; border-radius: 12px; }
-        .file-item { padding: 8px 12px; border-bottom: 1px solid #333; display: flex; justify-content: space-between; font-size: 12px; align-items: center; }
-        .select-btn { color:#ff85a2; background:none; border:1.5px solid #ff85a2; padding:3px 10px; cursor:pointer; border-radius:15px; font-weight: 700; }
-
-        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
+        .btn-sub { background: #333; color: #eee; border-radius: 15px; padding: 12px; font-size: 13px; display: block; text-align: center; cursor: pointer; }
+        #fileList { max-height: 100px; overflow-y: auto; background: #000; border-radius: 12px; margin-top: 10px; border: 1px solid #222; }
+        .file-item { padding: 10px; font-size: 12px; color: #fff; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #222; }
     </style>
 </head>
 <body>
 
-<div id="recTimer">REC 00:00</div>
+<div id="progressBar"></div>
+<div id="topInfo"><div id="timeDisplay">00:00.0 / 00:00.0</div></div>
 <canvas id="visualizer"></canvas>
 
 <div id="uiPanel">
-    <div id="initSection">
-        <button id="startBtn" class="btn btn-primary">システムを開始する</button>
-    </div>
-    <div id="mainControls" class="hidden">
-        <div class="control-row">
-            <label>スペクトラムアナライザの色</label>
-            <select id="colorMode">
-                <option value="kawaii">パステル</option>
-                <option value="custom">えらんだ色</option>
-                <option value="rainbow">にじいろ</option>
-            </select>
+    <div id="initSection"><button id="initBtn" class="btn btn-primary">始める</button></div>
+    <div id="mainControls" style="display:none;">
+        <div class="ui-section">
+            <div class="section-title">音楽</div>
+            <label for="audioInput" class="btn-sub">＋ 曲を追加</label>
+            <input type="file" id="audioInput" accept=".mp3,.wav,.ogg,.m4a,.aac,.flac" multiple style="display:none;">
+            <div id="fileList"></div>
+            <button id="playBtn" class="btn" style="background:#7ae582; color:#fff;">再生 / 一時停止</button>
         </div>
-        <div class="control-row" id="customColorRow" style="display:none;">
-            <label>好きな色</label>
-            <input type="color" id="barColor" value="#ffc2d1">
-        </div>
-
-        <div class="control-row">
-            <label>形</label>
-            <select id="modeSelect">
-                <option value="circle">丸</option>
-                <option value="solid_rect">四角</option>
-                <option value="horizontal">横</option>
-                <option value="vertical">縦</option>
-            </select>
-        </div>
-
-        <input type="file" id="audioInput" multiple accept=".mp3,.wav,.m4a" style="display:none;">
-        <button class="btn" style="background:#444; color:#fff;" onclick="document.getElementById('audioInput').click()">＋ 曲を追加</button>
-        <div id="fileList"></div>
-        <button id="playBtn" class="btn btn-play">再生 / 停止</button>
-
-        <div class="rec-range">
-            <div style="font-size: 12px; color: #ff85a2; margin-bottom: 8px; font-weight: 700;">🎥 録画する範囲</div>
-            <div class="control-row">
-                <label>スタート</label>
-                <input type="number" id="startTime" value="0" step="0.5">
-                <label style="min-width:30px; text-align:right;">〜</label>
-                <input type="number" id="endTime" value="10" step="0.5">
+        <div class="ui-section">
+            <div class="section-title"> 録画範囲（分:秒.コンマ）</div>
+            <div class="picker-group">
+                <div class="picker-label">開始</div>
+                <div class="drum-wrapper"><div class="drum-list" id="sMinList"></div></div>
+                <div style="color:#ff85a2">:</div><div class="drum-wrapper"><div class="drum-list" id="sSecList"></div></div>
+                <div style="color:#ff85a2">.</div><div class="drum-wrapper"><div class="drum-list" id="sMsList"></div></div>
             </div>
-            <button id="rangeRecBtn" class="btn btn-rec">この範囲を録画する</button>
+            <div class="picker-group">
+                <div class="picker-label">終了</div>
+                <div class="drum-wrapper"><div class="drum-list" id="eMinList"></div></div>
+                <div style="color:#ff85a2">:</div><div class="drum-wrapper"><div class="drum-list" id="eSecList"></div></div>
+                <div style="color:#ff85a2">.</div><div class="drum-wrapper"><div class="drum-list" id="eMsList"></div></div>
+            </div>
+            <button id="rangeRecBtn" class="btn btn-rec">録画を開始する</button>
         </div>
-        <button class="btn" style="background:#222; color:#888;" onclick="toggleUI()">UIを閉じる</button>
+        <div class="ui-section">
+            <div class="section-title">デザイン & カラー</div>
+            <div class="control-row"><label>形</label><select id="modeSelect"><option value="circle">丸</option><option value="solid_rect">四角</option><option value="horizontal">横</option><option value="vertical">縦</option></select></div>
+            <div class="control-row"><label>配色</label><select id="colorMode"><option value="rainbow">虹色</option><option value="kawaii">パステル</option><option value="single">単色</option></select></div>
+            <div class="control-row" id="singleColorRow" style="display:none;"><label>指定カラー</label><input type="color" id="singleColorPicker" value="#ff85a2"></div>
+            <div class="control-row"><label>透明度</label><input type="range" id="opacitySlider" min="10" max="100" value="100"></div>
+            <div class="control-row"><label>発光度</label><input type="range" id="glowIntensity" min="0" max="100" value="80"></div>
+            <button class="btn-sub" style="width:100%; margin-top:10px;" onclick="document.getElementById('bgInput').click()">背景画像を変更</button>
+            <input type="file" id="bgInput" accept=".jpg,.jpeg,.png,.webp" style="display:none;">
+        </div>
+        <button class="btn" style="background:#222; color:#888;" onclick="toggleUI()">UIを隠す</button>
     </div>
 </div>
 
 <script>
-    let audioCtx, analyzer, source, destStream;
-    let mediaRecorder, recordedChunks = [];
-    let currentBuffer = null;
-    let isPlaying = false, isRecording = false, timerInterval = null;
-    const canvas = document.getElementById('visualizer'), ctx = canvas.getContext('2d'), timerDisplay = document.getElementById('recTimer');
-    const bgImg = new Image();
-    bgImg.crossOrigin = "anonymous";
+    let audioCtx, analyzer, source, destStream, currentBuffer, isPlaying = false, isRecording = false;
+    let startTimeInAudio = 0, pauseTime = 0, loadedFiles = [], currentFileName = "recording";
+    const canvas = document.getElementById('visualizer'), ctx = canvas.getContext('2d');
+    const bgImg = new Image(); bgImg.crossOrigin = "anonymous";
     bgImg.src = 'https://raw.githubusercontent.com/shirasu1221/shirasu1221.github.io/main/IMG_0518.jpeg';
+    let bgLoaded = false; bgImg.onload = () => { bgLoaded = true; };
 
-    let initialWidth = window.innerWidth, initialHeight = window.innerHeight;
-    function resizeCanvas() {
-        if (Math.abs(window.innerWidth - initialWidth) > 100) { initialWidth = window.innerWidth; initialHeight = window.innerHeight; }
-        canvas.width = initialWidth; canvas.height = initialHeight;
+    const pickers = {};
+    function setupPicker(id, max) {
+        const list = document.getElementById(id);
+        list.innerHTML = '<div class="drum-item"></div>' + Array.from({length: max + 1}, (_, i) => `<div class="drum-item">${i.toString().padStart(id.includes('Ms')?1:2,'0')}</div>`).join('') + '<div class="drum-item"></div>';
+        let val = 0;
+        const update = (v) => {
+            val = Math.max(0, Math.min(max, v));
+            list.style.transform = `translateY(${-(val * 30)}px)`;
+            Array.from(list.children).forEach((el, i) => el.classList.toggle('selected', i === val + 1));
+        };
+        const wrapper = list.parentElement;
+        wrapper.onwheel = (e) => { e.preventDefault(); update(val + (e.deltaY > 0 ? 1 : -1)); };
+        let startY, startV;
+        wrapper.ontouchstart = (e) => { startY = e.touches[0].pageY; startV = val; };
+        wrapper.ontouchmove = (e) => { e.preventDefault(); update(startV + Math.round((startY - e.touches[0].pageY) / 20)); };
+        pickers[id] = { update, get: () => val };
+        update(0);
     }
-    window.addEventListener('resize', resizeCanvas); resizeCanvas();
+    ['sMinList', 'eMinList', 'sSecList', 'eSecList'].forEach(id => setupPicker(id, 59));
+    ['sMsList', 'eMsList'].forEach(id => setupPicker(id, 9));
 
-    // 色設定の表示切り替え
-    document.getElementById('colorMode').onchange = function() {
-        document.getElementById('customColorRow').style.display = (this.value === 'custom') ? 'flex' : 'none';
-    };
+    document.getElementById('colorMode').onchange = (e) => document.getElementById('singleColorRow').style.display = (e.target.value === 'single') ? 'flex' : 'none';
 
-    function toggleUI() { document.getElementById('uiPanel').classList.toggle('hidden'); }
-    canvas.onclick = () => { document.getElementById('uiPanel').classList.remove('hidden'); };
+    function resize() {
+        const dpr = window.devicePixelRatio || 1;
+        canvas.width = window.innerWidth * dpr; canvas.height = window.innerHeight * dpr;
+        ctx.scale(dpr, dpr);
+    }
+    window.onresize = resize; resize();
+    const toggleUI = () => document.getElementById('uiPanel').classList.toggle('hidden');
+    canvas.onclick = () => { if(document.getElementById('uiPanel').classList.contains('hidden')) toggleUI(); };
 
-    document.getElementById('startBtn').onclick = async function() {
+    document.getElementById('initBtn').onclick = async () => {
         audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        analyzer = audioCtx.createAnalyser(); analyzer.fftSize = 1024; analyzer.smoothingTimeConstant = 0.8;
+        analyzer = audioCtx.createAnalyser(); analyzer.fftSize = 1024;
         destStream = audioCtx.createMediaStreamDestination();
-        document.getElementById('initSection').classList.add('hidden');
-        document.getElementById('mainControls').classList.remove('hidden');
+        document.getElementById('initSection').style.display = 'none';
+        document.getElementById('mainControls').style.display = 'block';
         draw();
     };
 
-    document.getElementById('audioInput').onchange = async function(e) {
-        const files = Array.from(e.target.files);
-        for(let f of files) {
-            const buffer = await audioCtx.decodeAudioData(await f.arrayBuffer());
-            const index = (window.loadedFiles || []).length;
-            const div = document.createElement('div');
-            div.className = 'file-item';
-            div.innerHTML = `<span>${f.name.slice(0,12)}</span><button class="select-btn" onclick="selectFile(${index})">選ぶ</button>`;
-            document.getElementById('fileList').appendChild(div);
-            window.loadedFiles = (window.loadedFiles || []).concat({ buffer: buffer });
+    document.getElementById('audioInput').onchange = async (e) => {
+        for(let file of e.target.files) {
+            try {
+                const buffer = await audioCtx.decodeAudioData(await file.arrayBuffer());
+                const idx = loadedFiles.length;
+                loadedFiles.push({buffer, name: file.name.split('.')[0]});
+                const div = document.createElement('div');
+                div.className = 'file-item';
+                div.innerHTML = `<span>${file.name.slice(0,18)}..</span><button class="btn-primary" style="width:auto; padding:6px 15px; border-radius:12px; font-size:12px;" onclick="loadBuffer(${idx})">選ぶ</button>`;
+                document.getElementById('fileList').appendChild(div);
+            } catch(err) { alert("Error"); }
         }
     };
 
-    function selectFile(index) { currentBuffer = window.loadedFiles[index].buffer; playAudio(0); }
-    function playAudio(offset) {
-        if(source) { try { source.stop(); } catch(e){} }
+    window.loadBuffer = (idx) => {
+        const item = loadedFiles[idx];
+        currentBuffer = item.buffer;
+        currentFileName = item.name;
+        const dur = currentBuffer.duration;
+        pickers['eMinList'].update(Math.floor(dur / 60));
+        pickers['eSecList'].update(Math.floor(dur % 60));
+        pickers['eMsList'].update(Math.floor((dur % 1) * 10));
+        pauseTime = 0; play(0);
+    };
+
+    function play(offset) {
+        if(source) try { source.stop(); } catch(e){}
         if(!currentBuffer) return;
         source = audioCtx.createBufferSource(); source.buffer = currentBuffer;
         source.connect(analyzer); analyzer.connect(audioCtx.destination); analyzer.connect(destStream);
+        startTimeInAudio = audioCtx.currentTime - offset;
         source.start(0, offset); isPlaying = true;
     }
 
     document.getElementById('playBtn').onclick = () => {
-        if (isPlaying) { if(source) source.stop(); isPlaying = false; }
-        else { playAudio(0); }
+        if(isPlaying) { pauseTime = audioCtx.currentTime - startTimeInAudio; source.stop(); isPlaying = false; }
+        else { play(pauseTime); }
     };
-
-    function startTimer(start, end) {
-        timerDisplay.classList.add('active'); let current = start;
-        timerInterval = setInterval(() => {
-            current += 0.1; timerDisplay.textContent = `REC ${current.toFixed(1)}s / ${end}s`;
-            if (current >= end) stopRec();
-        }, 100);
-    }
 
     document.getElementById('rangeRecBtn').onclick = function() {
-        if (isRecording) { stopRec(); return; }
-        if (!currentBuffer) return;
-        const start = parseFloat(document.getElementById('startTime').value) || 0;
-        const end = parseFloat(document.getElementById('endTime').value) || 0;
-        recordedChunks = [];
-        const stream = new MediaStream([...canvas.captureStream(60).getVideoTracks(), ...destStream.stream.getAudioTracks()]);
-        mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/webm;codecs=vp9,opus' });
-        mediaRecorder.ondataavailable = (e) => recordedChunks.push(e.data);
-        mediaRecorder.onstop = () => {
-            const blob = new Blob(recordedChunks, { type: "video/webm" });
-            const a = document.createElement("a"); a.href = URL.createObjectURL(blob);
-            a.download = "viz_rec.webm"; a.click();
+        if(isRecording || !currentBuffer) return;
+        
+        const start = pickers['sMinList'].get() * 60 + pickers['sSecList'].get() + (pickers['sMsList'].get() / 10);
+        const end = pickers['eMinList'].get() * 60 + pickers['eSecList'].get() + (pickers['eMsList'].get() / 10);
+        
+        if(end <= start) return alert("終了時間を正しく設定してください");
+
+        isRecording = true;
+        const chunks = [];
+        const combinedStream = new MediaStream([...canvas.captureStream(60).getTracks(), ...destStream.stream.getTracks()]);
+        const mr = new MediaRecorder(combinedStream, { mimeType: 'video/webm' });
+
+        mr.ondataavailable = e => { if(e.data.size > 0) chunks.push(e.data); };
+        mr.onstop = () => { 
+            const blob = new Blob(chunks, { type: "video/webm" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url; a.download = `${currentFileName}_viz.webm`;
+            a.click();
+            isRecording = false;
+            this.textContent = "録画を開始する";
+            this.style.background = "#ff5c8a";
         };
-        playAudio(start); mediaRecorder.start(); isRecording = true;
-        this.classList.add('recording'); this.textContent = "録画を止める"; startTimer(start, end);
+
+        // 指定位置から再生開始して録画
+        play(start);
+        mr.start();
+        this.textContent = "録画中...";
+        this.style.background = "#444";
+
+        const checkEnd = setInterval(() => {
+            const cur = audioCtx.currentTime - startTimeInAudio;
+            if(cur >= end || !isPlaying) { 
+                mr.stop(); 
+                if(isPlaying) { source.stop(); isPlaying = false; pauseTime = cur; }
+                clearInterval(checkEnd);
+            }
+        }, 30);
     };
 
-    function stopRec() {
-        if (mediaRecorder && mediaRecorder.state === "recording") mediaRecorder.stop();
-        if (source) source.stop(); if (timerInterval) clearInterval(timerInterval);
-        isRecording = false; isPlaying = false; timerDisplay.classList.remove('active');
-        const btn = document.getElementById('rangeRecBtn'); btn.classList.remove('recording'); btn.textContent = "この範囲を録画する";
-    }
-
-    function getBarColor(i, total, mode, userColor) {
-        if (mode === 'kawaii') {
-            // パステルピンク〜パープルのグラデーション
-            return `hsla(${330 + (i/total)*40}, 100%, 85%, 0.9)`;
-        } else if (mode === 'custom') {
-            return userColor + "EE"; // 透明度を追加
-        } else {
-            return `hsla(${(i/total)*360}, 95%, 70%, 0.9)`; // にじいろ
-        }
-    }
-
     function draw() {
-        requestAnimationFrame(draw); if(!analyzer) return;
-        const imgAspect = bgImg.width / bgImg.height, canvasAspect = canvas.width / canvas.height;
-        let drawW, drawH, offsetX, offsetY;
-        if (canvasAspect > imgAspect) { drawW = canvas.width; drawH = canvas.width / imgAspect; offsetX = 0; offsetY = (canvas.height - drawH) / 2; }
-        else { drawW = canvas.height * imgAspect; drawH = canvas.height; offsetX = (canvas.width - drawW) / 2; offsetY = 0; }
-        ctx.clearRect(0,0,canvas.width, canvas.height); ctx.drawImage(bgImg, offsetX, offsetY, drawW, drawH);
-        ctx.fillStyle = "rgba(0, 0, 0, 0.65)"; ctx.fillRect(0, 0, canvas.width, canvas.height);
-        
-        const rawData = new Uint8Array(analyzer.frequencyBinCount);
-        analyzer.getByteFrequencyData(rawData);
-        const mode = document.getElementById('modeSelect').value;
-        const cMode = document.getElementById('colorMode').value;
-        const uColor = document.getElementById('barColor').value;
+        requestAnimationFrame(draw);
+        const w = canvas.width / (window.devicePixelRatio || 1), h = canvas.height / (window.devicePixelRatio || 1);
+        if(currentBuffer) {
+            const cur = isPlaying ? (audioCtx.currentTime - startTimeInAudio) : pauseTime;
+            const fmt = s => {
+                const m = Math.floor(s/60).toString().padStart(2,'0');
+                const sec = Math.floor(s%60).toString().padStart(2,'0');
+                const ms = Math.floor((s%1)*10);
+                return `${m}:${sec}.${ms}`;
+            };
+            document.getElementById('timeDisplay').textContent = `${fmt(cur)} / ${fmt(currentBuffer.duration)}`;
+            document.getElementById('progressBar').style.width = Math.min(100, (cur/currentBuffer.duration)*100) + "%";
+        }
+        ctx.globalCompositeOperation = "source-over"; ctx.shadowBlur = 0; ctx.clearRect(0,0,w,h);
+        if(bgLoaded) {
+            const r = bgImg.width/bgImg.height, cr = w/h;
+            let dw = w, dh = h, ox = 0, oy = 0;
+            if(r > cr) { dw = h*r; ox = (w-dw)/2; } else { dh = w/r; oy = (h-dh)/2; }
+            ctx.drawImage(bgImg, ox, oy, dw, dh);
+        }
+        ctx.fillStyle = "rgba(0,0,0,0.4)"; ctx.fillRect(0,0,w,h);
+        if(!analyzer) return;
+        const data = new Uint8Array(analyzer.frequencyBinCount); analyzer.getByteFrequencyData(data);
+        const mode = document.getElementById('modeSelect').value, cMode = document.getElementById('colorMode').value, glowVal = document.getElementById('glowIntensity').value, opacity = document.getElementById('opacitySlider').value / 100, singleColor = document.getElementById('singleColorPicker').value;
 
-        if (mode === 'circle') {
-            const cx = canvas.width * 0.25, cy = canvas.height * 0.25, r = 80;
-            ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.strokeStyle = "rgba(0, 0, 0, 0.8)"; ctx.lineWidth = 4; ctx.stroke();
-            for (let i = 0; i < 180; i++) {
-                const val = rawData[Math.floor(Math.pow((i % 90) / 90, 1.2) * 200)];
-                const h = Math.pow(val / 255, 1.5) * 80;
-                const rad = i * (Math.PI * 2 / 180);
-                ctx.strokeStyle = getBarColor(i, 180, cMode, uColor);
-                ctx.lineWidth = 2.5; ctx.lineCap = "round"; ctx.beginPath();
-                ctx.moveTo(cx + Math.cos(rad)*r, cy + Math.sin(rad)*r); ctx.lineTo(cx + Math.cos(rad)*(r+h), cy + Math.sin(rad)*(r+h)); ctx.stroke();
+        const getCol = (i, total) => {
+            if(cMode === 'single') {
+                const r = parseInt(singleColor.slice(1,3), 16), g = parseInt(singleColor.slice(3,5), 16), b = parseInt(singleColor.slice(5,7), 16);
+                return `rgba(${r}, ${g}, ${b}, ${opacity})`;
             }
-        } else if (mode === 'solid_rect') {
-            const bars = 80, bw = canvas.width / bars;
-            for (let i = 0; i < bars; i++) {
-                const val = rawData[Math.floor(Math.pow(i / bars, 1.5) * (rawData.length / 2))];
-                const h = (val / 255) * (canvas.height * 0.7);
-                ctx.fillStyle = getBarColor(i, bars, cMode, uColor);
-                ctx.fillRect(i * bw, canvas.height - h, bw - 1, h);
+            return `hsla(${cMode==='rainbow'?(i/total)*360:280+(i/total)*60}, 100%, 75%, ${opacity})`;
+        };
+
+        if(mode === 'solid_rect') {
+            const bars = 60, bw = Math.ceil(w/bars);
+            for(let i=0; i<bars; i++) {
+                const bh = (data[i*4]/255)*(h*0.5), col = getCol(i, bars);
+                ctx.shadowBlur = glowVal / 2; ctx.shadowColor = col; ctx.fillStyle = col; ctx.fillRect(i*bw, h-bh, bw, bh);
             }
-        } else if (mode === 'horizontal' || mode === 'vertical') {
-            const bars = 100; const isH = mode === 'horizontal';
-            const unit = (isH ? canvas.width : canvas.height) / bars; const base = 90;
-            for (let i = 0; i < bars; i++) {
-                const val = rawData[Math.floor(Math.pow(i/bars, 1.5) * 250)];
-                const h = Math.pow(val / 255, 1.5) * 130;
-                ctx.strokeStyle = getBarColor(i, bars, cMode, uColor);
-                ctx.lineWidth = 3; ctx.lineCap = "round"; ctx.beginPath();
-                if(isH) { ctx.moveTo(i*unit, base-h); ctx.lineTo(i*unit, base+h); }
-                else { ctx.moveTo(base-h, i*unit); ctx.lineTo(base+h, i*unit); }
-                ctx.stroke();
+        } else {
+            ctx.globalCompositeOperation = "lighter"; ctx.lineCap = "round";
+            if(mode === 'circle') {
+                const cx = w*0.3, cy = h/2, r = Math.min(w,h)*0.22;
+                for(let i=0; i<100; i++) {
+                    const bh = (data[i*3]/255)*130, rad = (i/100)*Math.PI*2 - Math.PI/2, col = getCol(i, 100);
+                    ctx.shadowBlur = glowVal / 3; ctx.shadowColor = col; ctx.strokeStyle = col; ctx.lineWidth = 4;
+                    ctx.beginPath(); ctx.moveTo(cx+Math.cos(rad)*r, cy+Math.sin(rad)*r); ctx.lineTo(cx+Math.cos(rad)*(r+bh), cy+Math.sin(rad)*(r+bh)); ctx.stroke();
+                }
+            } else {
+                const bars = 80;
+                for(let i=0; i<bars; i++) {
+                    const bh = Math.pow(data[i*2]/255, 1.2)*200, col = getCol(i, bars);
+                    ctx.shadowBlur = glowVal / 3; ctx.shadowColor = col; ctx.strokeStyle = col; ctx.lineWidth = 3;
+                    ctx.beginPath();
+                    if(mode === 'horizontal') { ctx.moveTo(i*(w/bars), h/2-bh); ctx.lineTo(i*(w/bars), h/2+bh); }
+                    else { ctx.moveTo(w*0.15-bh, i*(h/bars)); ctx.lineTo(w*0.15+bh, i*(h/bars)); }
+                    ctx.stroke();
+                }
             }
         }
     }
+    document.getElementById('bgInput').onchange = e => {
+        const reader = new FileReader();
+        reader.onload = ev => { bgLoaded = false; bgImg.src = ev.target.result; };
+        reader.readAsDataURL(e.target.files[0]);
+    };
 </script>
 </body>
 </html>
