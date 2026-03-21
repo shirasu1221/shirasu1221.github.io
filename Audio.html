@@ -8,25 +8,38 @@
         * { font-family: 'M PLUS Rounded 1c', sans-serif; box-sizing: border-box; -webkit-user-select: none; touch-action: manipulation; }
         html, body { position: fixed; width: 100%; height: 100%; margin: 0; overflow: hidden; background: #000; left: 0; top: 0; }
         canvas { position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 5; cursor: pointer; }
+        
         #topInfo { position: fixed; top: 20px; width: 100%; color: #fff; text-align: center; z-index: 20; font-weight: bold; text-shadow: 0 0 8px #000; pointer-events: none; }
         #progressBar { position: fixed; top: 0; left: 0; width: 0%; height: 5px; background: #ff85a2; z-index: 25; box-shadow: 0 0 10px #ff85a2; }
-        #uiPanel { position: absolute; top: 50%; left: 50%; width: 95%; max-width: 440px; z-index: 15; background: rgba(15, 15, 15, 0.98); padding: 25px; border-radius: 30px; border: 2px solid #ff85a2; transform: translate(-50%, -50%); max-height: 85vh; overflow-y: auto; transition: 0.3s; }
+
+        #uiPanel {
+            position: absolute; top: 50%; left: 50%; width: 95%; max-width: 440px; z-index: 15;
+            background: rgba(15, 15, 15, 0.98); padding: 25px; border-radius: 30px;
+            border: 2px solid #ff85a2; transform: translate(-50%, -50%);
+            max-height: 85vh; overflow-y: auto; transition: 0.3s;
+        }
         #uiPanel.hidden { opacity: 0; visibility: hidden; transform: translate(-50%, -45%) scale(0.9); }
+
         .ui-section { border-bottom: 1px solid #333; margin-bottom: 15px; padding-bottom: 15px; }
         .section-title { font-size: 12px; color: #ff85a2; font-weight: 700; margin-bottom: 12px; }
+
+        /* スクロールピッカーUI */
         .picker-group { display: flex; justify-content: center; align-items: center; gap: 6px; margin: 10px 0; }
         .picker-label { color: #ffc2d1; font-size: 11px; width: 35px; font-weight: bold; }
         .drum-wrapper { position: relative; height: 90px; width: 60px; overflow: hidden; background: #1a1a1a; border-radius: 12px; border: 1px solid #333; }
         .drum-list { position: absolute; width: 100%; transition: transform 0.2s cubic-bezier(0.1, 0.7, 0.1, 1); }
         .drum-item { height: 30px; line-height: 30px; color: #444; font-size: 15px; text-align: center; }
         .drum-item.selected { color: #ff85a2; font-size: 18px; font-weight: bold; }
+
         .control-row { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
         label { font-size: 11px; color: #ffc2d1; min-width: 75px; font-weight: bold; }
         select, input[type="range"], input[type="color"] { flex: 1; background: #222; color: #fff; border: 1px solid #444; border-radius: 10px; height: 35px; }
+
         .btn { cursor: pointer; padding: 12px; border: none; border-radius: 20px; font-weight: 700; width: 100%; margin-top: 8px; transition: 0.2s; }
         .btn-primary { background: #ff85a2; color: #fff; }
         .btn-rec { background: #ff5c8a; color: #fff; }
         .btn-sub { background: #333; color: #eee; border-radius: 15px; padding: 12px; font-size: 13px; display: block; text-align: center; cursor: pointer; }
+        
         #fileList { max-height: 100px; overflow-y: auto; background: #000; border-radius: 12px; margin-top: 10px; border: 1px solid #222; }
         .file-item { padding: 10px; font-size: 12px; color: #fff; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #222; }
     </style>
@@ -35,20 +48,23 @@
 
 <div id="progressBar"></div>
 <div id="topInfo"><div id="timeDisplay">00:00.0 / 00:00.0</div></div>
+
 <canvas id="visualizer"></canvas>
 
 <div id="uiPanel">
-    <div id="initSection"><button id="initBtn" class="btn btn-primary">始める</button></div>
+    <div id="initSection"><button id="initBtn" class="btn btn-primary">開始</button></div>
+    
     <div id="mainControls" style="display:none;">
         <div class="ui-section">
-            <div class="section-title">音楽</div>
+            <div class="section-title"> 音楽</div>
             <label for="audioInput" class="btn-sub">＋ 曲を追加</label>
             <input type="file" id="audioInput" accept=".mp3,.wav,.ogg,.m4a,.aac,.flac" multiple style="display:none;">
             <div id="fileList"></div>
             <button id="playBtn" class="btn" style="background:#7ae582; color:#fff;">再生 / 一時停止</button>
         </div>
+
         <div class="ui-section">
-            <div class="section-title"> 録画範囲（分:秒.コンマ）</div>
+            <div class="section-title">録画範囲（分:秒.コンマ）</div>
             <div class="picker-group">
                 <div class="picker-label">開始</div>
                 <div class="drum-wrapper"><div class="drum-list" id="sMinList"></div></div>
@@ -61,18 +77,44 @@
                 <div style="color:#ff85a2">:</div><div class="drum-wrapper"><div class="drum-list" id="eSecList"></div></div>
                 <div style="color:#ff85a2">.</div><div class="drum-wrapper"><div class="drum-list" id="eMsList"></div></div>
             </div>
-            <button id="rangeRecBtn" class="btn btn-rec">録画を開始する</button>
+            <button id="rangeRecBtn" class="btn btn-rec">指定範囲で録画</button>
         </div>
+
         <div class="ui-section">
             <div class="section-title">デザイン & カラー</div>
-            <div class="control-row"><label>形</label><select id="modeSelect"><option value="circle">丸</option><option value="solid_rect">四角</option><option value="horizontal">横</option><option value="vertical">縦</option></select></div>
-            <div class="control-row"><label>配色</label><select id="colorMode"><option value="rainbow">虹色</option><option value="kawaii">パステル</option><option value="single">単色</option></select></div>
-            <div class="control-row" id="singleColorRow" style="display:none;"><label>指定カラー</label><input type="color" id="singleColorPicker" value="#ff85a2"></div>
-            <div class="control-row"><label>透明度</label><input type="range" id="opacitySlider" min="10" max="100" value="100"></div>
-            <div class="control-row"><label>発光度</label><input type="range" id="glowIntensity" min="0" max="100" value="80"></div>
+            <div class="control-row">
+                <label>形</label>
+                <select id="modeSelect">
+                    <option value="circle">丸</option>
+                    <option value="solid_rect">四角</option>
+                    <option value="horizontal">横</option>
+                    <option value="vertical">縦</option>
+                </select>
+            </div>
+            <div class="control-row">
+                <label>配色</label>
+                <select id="colorMode">
+                    <option value="rainbow">虹色</option>
+                    <option value="kawaii">パステル</option>
+                    <option value="single">単色 (指定カラー)</option>
+                </select>
+            </div>
+            <div class="control-row" id="singleColorRow" style="display:none;">
+                <label>指定カラー</label>
+                <input type="color" id="singleColorPicker" value="#ff85a2">
+            </div>
+            <div class="control-row">
+                <label>透明度</label>
+                <input type="range" id="opacitySlider" min="10" max="100" value="100">
+            </div>
+            <div class="control-row">
+                <label>発光度</label>
+                <input type="range" id="glowIntensity" min="0" max="100" value="80">
+            </div>
             <button class="btn-sub" style="width:100%; margin-top:10px;" onclick="document.getElementById('bgInput').click()">背景画像を変更</button>
             <input type="file" id="bgInput" accept=".jpg,.jpeg,.png,.webp" style="display:none;">
         </div>
+
         <button class="btn" style="background:#222; color:#888;" onclick="toggleUI()">UIを隠す</button>
     </div>
 </div>
@@ -85,6 +127,7 @@
     bgImg.src = 'https://raw.githubusercontent.com/shirasu1221/shirasu1221.github.io/main/IMG_0518.jpeg';
     let bgLoaded = false; bgImg.onload = () => { bgLoaded = true; };
 
+    // --- ドラムピッカー設定 ---
     const pickers = {};
     function setupPicker(id, max) {
         const list = document.getElementById(id);
@@ -109,8 +152,10 @@
     document.getElementById('colorMode').onchange = (e) => document.getElementById('singleColorRow').style.display = (e.target.value === 'single') ? 'flex' : 'none';
 
     function resize() {
-        const dpr = window.devicePixelRatio || 1;
-        canvas.width = window.innerWidth * dpr; canvas.height = window.innerHeight * dpr;
+        // ★修正点1: 録画時のクラッシュを防ぐため、内部解像度を1に固定してメモリを大幅節約
+        const dpr = 1; 
+        canvas.width = window.innerWidth * dpr; 
+        canvas.height = window.innerHeight * dpr;
         ctx.scale(dpr, dpr);
     }
     window.onresize = resize; resize();
@@ -175,7 +220,9 @@
 
         isRecording = true;
         const chunks = [];
-        const combinedStream = new MediaStream([...canvas.captureStream(60).getTracks(), ...destStream.stream.getTracks()]);
+        // ★修正点2: キャプチャレートを30fpsに落とし、iPadでの限界突破を防ぐ
+        const combinedStream = new MediaStream([...canvas.captureStream(30).getTracks(), ...destStream.stream.getTracks()]);
+        
         const mr = new MediaRecorder(combinedStream, { mimeType: 'video/webm' });
 
         mr.ondataavailable = e => { if(e.data.size > 0) chunks.push(e.data); };
@@ -186,14 +233,13 @@
             a.href = url; a.download = `${currentFileName}_viz.webm`;
             a.click();
             isRecording = false;
-            this.textContent = "録画を開始する";
+            this.textContent = "指定範囲で録画";
             this.style.background = "#ff5c8a";
         };
 
-        // 指定位置から再生開始して録画
         play(start);
-        mr.start();
-        this.textContent = "録画中...";
+        mr.start(1000); // ★修正点3: 1秒ごとにチャンクを書き出してメモリのパンクを回避
+        this.textContent = "録画中... (処理中)";
         this.style.background = "#444";
 
         const checkEnd = setInterval(() => {
@@ -203,12 +249,13 @@
                 if(isPlaying) { source.stop(); isPlaying = false; pauseTime = cur; }
                 clearInterval(checkEnd);
             }
-        }, 30);
+        }, 50);
     };
 
     function draw() {
         requestAnimationFrame(draw);
-        const w = canvas.width / (window.devicePixelRatio || 1), h = canvas.height / (window.devicePixelRatio || 1);
+        // ★描画基準の計算も dpr=1 前提に修正して負荷を下げる
+        const w = canvas.width, h = canvas.height;
         if(currentBuffer) {
             const cur = isPlaying ? (audioCtx.currentTime - startTimeInAudio) : pauseTime;
             const fmt = s => {
@@ -230,7 +277,12 @@
         ctx.fillStyle = "rgba(0,0,0,0.4)"; ctx.fillRect(0,0,w,h);
         if(!analyzer) return;
         const data = new Uint8Array(analyzer.frequencyBinCount); analyzer.getByteFrequencyData(data);
-        const mode = document.getElementById('modeSelect').value, cMode = document.getElementById('colorMode').value, glowVal = document.getElementById('glowIntensity').value, opacity = document.getElementById('opacitySlider').value / 100, singleColor = document.getElementById('singleColorPicker').value;
+        
+        const mode = document.getElementById('modeSelect').value;
+        const cMode = document.getElementById('colorMode').value;
+        const glowVal = document.getElementById('glowIntensity').value;
+        const opacity = document.getElementById('opacitySlider').value / 100;
+        const singleColor = document.getElementById('singleColorPicker').value;
 
         const getCol = (i, total) => {
             if(cMode === 'single') {
